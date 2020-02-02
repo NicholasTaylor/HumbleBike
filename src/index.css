@@ -18,6 +18,10 @@ html, body {
     text-align: center;
 }
 
+#updated {
+    text-align: center;
+}
+
 h1, h2, h3, h4, h5, h6, #container-footer {
     font-family: agenda, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 'helvetica neue', helvetica, arial, sans-serif;
     line-height: 1em;

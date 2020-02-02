@@ -1,84 +1,21 @@
 import React from 'react';
 import Logo from './components/Logo'
 import CustomFonts from './components/Fonts'
-import TestStation from './components/TestStation'
 import './App.css';
 import {connect} from 'react-redux';
-import {get_location, get_info, get_station, requestDataLoad} from './actions/index';
-
-class StationList extends React.Component {
-  constructor(props){
-    super(props)
-  }
-}
+import {requestDataLoad} from './actions/index';
 
 class App extends React.Component {
-  constructor(props){
-    super(props)
-    this.state={
-      TestStations: [
-        {
-          name: 'Marcy Ave & Lafayette Ave',
-          dist: 0.06,
-          classic: 10,
-          electric: 0,
-          docks: 13
-        },
-        {
-          name: 'Kosciuszko St & Tompkins Ave',
-          dist: 0.15,
-          classic: 8,
-          electric: 0,
-          docks: 10
-        },
-        {
-          name: 'Kosciuszko St & Nostrand Ave',
-          dist: 0.17,
-          classic: 7,
-          electric: 0,
-          docks: 15
-        },
-        {
-          name: 'Greene Ave & Nostrand Ave',
-          dist: 0.23,
-          classic: 7,
-          electric: 0,
-          docks: 15
-        },
-        {
-          name: 'Willoughby Ave & Tompkins Ave',
-          dist: 0.25,
-          classic: 4,
-          electric: 0,
-          docks: 15
-        },
-        {
-          name: 'Myrtle Ave & Marcy Ave',
-          dist: 0.32,
-          classic: 2,
-          electric: 0,
-          docks: 21
-        },
-      ]
-    }
-  }
-
   componentDidMount(){
     this.props.requestDataLoad();
+    setInterval(this.props.requestDataLoad,10000);
 
   }
 
-  genTestStation(i) {
-    const stationData = this.state.TestStations[i];
-    return (      
-      <TestStation 
-        name={stationData.name}
-        dist={stationData.dist}
-        classic={stationData.classic}
-        electric={stationData.electric}
-        docks={stationData.docks}
-      />
-    );
+
+  componentWillUnmount(){
+    clearInterval(this.props.requestDataLoad,10000);
+
   }
 
   render(){
@@ -88,12 +25,44 @@ class App extends React.Component {
         <div id="container">
           <div id="content">
             <Logo />
-            {this.genTestStation(0)}
-            {this.genTestStation(1)}
-            {this.genTestStation(2)}
-            {this.genTestStation(3)}
-            {this.genTestStation(4)}
-            {this.genTestStation(5)}
+            <div id="updated">
+              <h2>
+                Last updated: {this.props.updated}
+              </h2>
+            </div>
+            {this.props.stations.map(el =>(
+              <section key={el.station_id}>
+                <div className="container-station">
+                  <h3 className="station-name">
+                  {el.name}{el.dist}
+                  </h3>
+                  <div className="infoSection classic-bikes">
+                    <h4 className="bikes-remaining">
+                    {el.classic}
+                    </h4>
+                    <h5 className="descriptor">
+                    Classic
+                    </h5>
+                  </div>
+                  <div className="infoSection ebikes">
+                    <h4 className="ebikes-remaining">
+                    {el.electric}
+                    </h4>
+                    <h5 className="descriptor">
+                    Electric
+                    </h5>
+                  </div>
+                  <div className="infoSection docks">
+                    <h4 className="docks-remaining">
+                    {el.docks}
+                    </h4>
+                    <h5 className="descriptor">
+                    Docks
+                    </h5>
+                  </div>
+                </div>
+              </section>
+            ))}
           </div>
         </div>
       </div>
@@ -103,9 +72,8 @@ class App extends React.Component {
 
 function mapStateToProps(state){
   return {
-    location: state.location,
     stations: state.stations,
-    info: state.info
+    updated: state.updated
   };
 }
 

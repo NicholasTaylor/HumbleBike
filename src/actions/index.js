@@ -6,6 +6,7 @@ export function get_location(payload){
 
 export function requestDataLoad(){
 	return function(dispatch){
+		console.log(new Date());
 		return dispatch({type:REQUEST_DATA_LOAD})
 	}
 }
