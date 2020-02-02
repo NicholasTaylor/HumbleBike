@@ -1,7 +1,13 @@
-import {GET_LOCATION, GET_INFO, GET_STATION} from '../constants/action-types';
+import {GET_LOCATION, GET_INFO, GET_STATION, REQUEST_DATA_LOAD} from '../constants/action-types';
 
 export function get_location(payload){
 	return {type:GET_LOCATION}
+}
+
+export function requestDataLoad(){
+	return function(dispatch){
+		return dispatch({type:REQUEST_DATA_LOAD})
+	}
 }
 
 export function get_info () {

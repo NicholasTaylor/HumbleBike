@@ -1,4 +1,6 @@
-import {GET_LOCATION, UPDATE_LOCATION} from '../constants/action-types.js';
+import {GET_LOCATION, UPDATE_LOCATION, DATA_LOAD_SUCCESS, REQUEST_DATA_LOAD} from '../constants/action-types.js';
+
+
 
 /*const refreshedData = {
 	location: {},
@@ -95,12 +97,33 @@ export function getLocation({dispatch}){
 	}
 }
 
+const getLocation_v2 = (input) => {
+	navigator.geolocation.getCurrentPosition(
+		(position)=>{			
+			input.location = {
+				lat: position.coords.latitude,
+				lon: position.coords.longitude,
+				isLocation: true
+			}
+			return input;
+		},
+		()=>{
+			return {
+				lat: 0,
+				lon: 0,
+				isLocation: false
+			}
+		}
+	)	
+}
 
-/*const getStation = (input) => {
+
+
+const getStation = (input) => {
 	return fetch('https://gbfs.citibikenyc.com/gbfs/en/station_status.json')
 		.then((response)=>response.json())
 		.then((json)=>{
-			input.stations = json;
+			Object.assign(input,json);
 			return input;
 		})
 }
@@ -109,11 +132,39 @@ const getInfo = (input) => {
 	return fetch('https://gbfs.citibikenyc.com/gbfs/en/station_information.json')
 		.then((response)=>response.json())
 		.then((json)=>{
-			input.info = json;
+			Object.assign(input,json);
 			return input;
 		})
 }
 
+export function componentDataLoad({dispatch}) {
+	return function(next){
+		return function(action){
+			if (action.type === REQUEST_DATA_LOAD){
+				const rawLocation = new Object;
+				const rawStation = new Object;
+				const rawInfo = new Object;
+				Promise.all([getLocation_v2(rawLocation),getStation(rawStation),getInfo(rawInfo)])
+				.then(
+					(rawData)=>{
+						dispatch({
+							type: DATA_LOAD_SUCCESS,
+							payload: {
+								location: rawLocation,
+								stations: rawStation,
+								info: rawInfo
+							}
+						})
+					}
+				)
+			}
+			return next(action);
+		}
+	}
+}
+
+
+/*
 export function getStations (refreshedData, dispatch) {
 	Promise.all([getLocation(refreshedData),getStation(refreshedData),getInfo(refreshedData)])
 		.then((refreshedData) => {

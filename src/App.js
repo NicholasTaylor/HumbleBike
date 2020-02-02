@@ -4,8 +4,7 @@ import CustomFonts from './components/Fonts'
 import TestStation from './components/TestStation'
 import './App.css';
 import {connect} from 'react-redux';
-import {get_location, get_info, get_station} from './actions/index'
-import {getDistanceArr} from './middleware/index';
+import {get_location, get_info, get_station, requestDataLoad} from './actions/index';
 
 class StationList extends React.Component {
   constructor(props){
@@ -65,25 +64,8 @@ class App extends React.Component {
   }
 
   componentDidMount(){
-    const componentDataLoad = () => {
-      return new Promise(
-        (resolve,reject)=>{
-          this.props.get_location();
-          resolve();
-        }
-      )
-      .then(
-        (resolve,reject)=>{
-          this.props.get_station();
-        }
-      )
-      .then(
-        (resolve,reject)=>{
-          this.props.get_info();
-        }
-      )
-    }
-    componentDataLoad();
+    this.props.requestDataLoad();
+
   }
 
   genTestStation(i) {
@@ -128,5 +110,5 @@ function mapStateToProps(state){
 }
 
 
-export default connect(mapStateToProps,{get_location, get_info, get_station})(App);
+export default connect(mapStateToProps,{requestDataLoad})(App);
 
