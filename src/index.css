@@ -1,0 +1,99 @@
+html, body {
+    font-size: 100%;
+}
+
+#container {
+    width: 100vw;
+    position: relative;
+}
+
+#content {
+    position: absolute;
+    width: 90vw;
+    left: 50vw;
+    transform: translateX(-50%);
+}
+
+#title {
+    text-align: center;
+}
+
+h1, h2, h3, h4, h5, h6, #container-footer {
+    font-family: agenda, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 'helvetica neue', helvetica, arial, sans-serif;
+    line-height: 1em;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+	font-size: 3rem;
+	font-weight: 700;
+}
+
+span.noBold {
+    font-weight: 100;
+}
+
+#title h1 sup {
+    border: 1px solid rgba(0,0,0,0.25);
+    font-size: 0.75rem;
+    vertical-align: top;
+    padding: 0.2em;
+    font-weight: 100;
+    line-height: 3.25em;
+}
+
+h2 {
+    font-style: italic;
+    font-size: 1rem;
+    margin: 0.25em 0 1em 0;
+}
+
+.container-station {
+    border-top: 1px solid rgba(0,0,0,0.25);
+    margin: 1em 0;
+    padding: 1em 0;
+}
+
+h3.station-name {
+    font-weight: 700;
+}
+
+.infoSection {
+    margin: 0;
+    width: 29vw;
+    display: inline-block;
+    padding: 0;
+    text-align: center;
+}
+
+h4 {
+    font-weight: 700;
+    font-size: 3rem;
+}
+
+h5.descriptor {
+    font-family: agenda-condensed;
+    font-weight: 500;
+}
+
+#container-footer {
+    font-size: 1.25em;
+    width: 100vw;
+    text-align: center;
+    position: fixed;
+    background-color: white;
+    bottom: 0;
+    display: block;
+    height: 10vh;
+    z-index: 10;
+}
+
+#content-footer {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
