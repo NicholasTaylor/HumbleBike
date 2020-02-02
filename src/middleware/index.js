@@ -1,89 +1,6 @@
-import {GET_LOCATION, UPDATE_LOCATION, DATA_LOAD_SUCCESS, REQUEST_DATA_LOAD} from '../constants/action-types.js';
+import {DATA_LOAD_SUCCESS, REQUEST_DATA_LOAD} from '../constants/action-types.js';
 
-
-
-/*const refreshedData = {
-	location: {},
-	stations: {},
-	info: {}
-}*/
-
-
-
-export function getDistanceArr (userLat, userLon, inputArr) {
-	console.log(JSON.stringify(inputArr));
-	for (let i=0; i < inputArr.length; i++){
-		const currentStation = inputArr[i];
-		console.log(currentStation.lat + ', ' +currentStation.lon);
-	}
-}
-
-/*
-const combineData = (input) => {
-	const output = new Array;
-	const rawData = input[input.length - 1];
-	const stationsList = rawData.stations.data.stations;
-	const infoList = rawData.info.data.stations;
-	for (station in stationsList){
-		const stationIn = stationsList[station];
-		for (info in infoList){
-			const infoIn = infoList[info];
-			if (stationIn.station_id === infoIn.station_id && stationIn.is_installed === 1 && stationIn.is_renting === 1 && stationIn.is_returning === 1){
-				const stationOut = {
-					id: stationIn.station_id,
-					name: infoIn.name,
-					dist: haversine(rawData.location.lat, rawData.location.lon, infoIn.lat, infoIn.lon),
-					classic: stationIn.num_bikes_available,
-					electric: stationIn.num_ebikes_available,
-					docks: stationIn.num_docks_available,
-					isLocation: rawData.location.isLocation
-				}
-				output.push(stationOut);
-				break;
-			}
-		}
-	}
-	return output;
-}*/
-
-export function getLocation({dispatch}){
-	return function (next) {
-		return function(action) {
-			if (action.type === GET_LOCATION){
-				navigator.geolocation.getCurrentPosition(
-					(position)=>{
-						return dispatch(
-							{
-								type: UPDATE_LOCATION,
-								payload: {
-									lat: position.coords.latitude,
-									lon: position.coords.longitude,
-									isLocation: true
-								}
-							}
-						);
-					},
-					()=>{
-						return dispatch(
-							{
-								type: UPDATE_LOCATION,
-								payload: {
-									lat: 0,
-									lon: 0,
-									isLocation: false
-								}
-							}
-						);
-					}
-				)
-				
-			}
-			return next(action);
-		}
-	}
-}
-
-const getLocation_v2 = (input) => {
+const getLocation = (input) => {
 	navigator.geolocation.getCurrentPosition(
 		(position)=>{			
 			const output = {
@@ -133,7 +50,7 @@ export function componentDataLoad({dispatch}) {
 				const rawLocation = {};
 				const rawStation = {};
 				const rawInfo = {};
-				Promise.all([getLocation_v2(rawLocation),getStation(rawStation),getInfo(rawInfo)])
+				Promise.all([getLocation(rawLocation),getStation(rawStation),getInfo(rawInfo)])
 				.then(
 					(rawData)=>{
 						dispatch({
@@ -151,16 +68,3 @@ export function componentDataLoad({dispatch}) {
 		}
 	}
 }
-
-
-/*
-export function getStations (refreshedData, dispatch) {
-	Promise.all([getLocation(refreshedData),getStation(refreshedData),getInfo(refreshedData)])
-		.then((refreshedData) => {
-			dispatch({
-				type: REFRESH_DATA_SUCCESS,
-				payload: combineData(refreshedData)
-			})
-			console.log(combineData(refreshedData))
-		})
-}*/

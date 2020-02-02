@@ -73,7 +73,8 @@ class App extends React.Component {
 function mapStateToProps(state){
   return {
     stations: state.stations,
-    updated: state.updated
+    updated: state.updated,
+    hasLocation: state.hasLocation
   };
 }
 

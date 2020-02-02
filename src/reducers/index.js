@@ -57,7 +57,8 @@ function rootReducer(state = stateInit, action){
 		}
 		return Object.assign({}, state, {
 			stations: processedDataSorted,
-			updated: convertTwoDigits((updated.getMonth() + 1)) +'/' + convertTwoDigits(updated.getDate()) +'/' +(updated.getYear() + 1900) +' ' +convertTwoDigits(updated.getHours()) +':' +convertTwoDigits(updated.getMinutes()) +':' +convertTwoDigits(updated.getSeconds())
+			updated: convertTwoDigits((updated.getMonth() + 1)) +'/' + convertTwoDigits(updated.getDate()) +'/' +(updated.getYear() + 1900) +' ' +convertTwoDigits(updated.getHours()) +':' +convertTwoDigits(updated.getMinutes()) +':' +convertTwoDigits(updated.getSeconds()),
+			hasLocation: hasLocation
 		});
 	}
 	return state;
