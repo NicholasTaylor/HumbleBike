@@ -1,68 +1,58 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# HumbleBike
+_Life should be simpler. So should finding a CitiBike._
 
-## Available Scripts
+HumbleBike is made to track bike and dock availability in New York's CitiBike system with a simple, text-based UI. This makes it easy for older phones or phone's with poor signal to see what's near them. Though it's made with NYC's CitiBike population in mind, it should be reasonably compatible with any bikeshare system using the General Bikeshare Feed Specification (GBFS). More on that below.
 
-In the project directory, you can run:
+# Initial Install
 
-### `npm start`
+This assumes basic familiarity with:
+* Command-line shell (ex. Apple's Terminal app)
+* An IDE (ex. Sublime Text, PhpStorm)
+* NPM
+* HTML, CSS, Javascript (React and Redux, specifically)
+* A webfont provider (ex. Adobe Fonts, Google Fonts)
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+After downloading and unzipping the zip off GitHub, open your shell and cd over to the unzipped directory. In the root of the unzipped directory, simply run `npm install` to general node_modules and grab all your dependencies.
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+# Font Setup
 
-### `npm test`
+HumbleBike is most of the way setup. Now we just have to configure the font file. From the root of this project folder go to the constants directory and change fonts-SAMPLE.js to fonts.js:
+`cd src/constants && mv fonts-SAMPLE.js fonts.js`
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Now, if you have certain webfonts you want to use on your implementation of HumbleBike, go to the webfont provider of your choice and build your font package. These providers typically give you a URL to put into the `<link rel="stylesheet">` tag. Copy that URL to your clipboard. warm up the IDE of your choice and open this fonts.js file. The file should just be one line of JS:
+`export const ADOBE_FONTS = '';`
 
-### `npm run build`
+Inside of the single quotes, paste your URL and save.
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+In my implementation, I used the fonts Agenda and Agenda-Condensed. If you use different fonts, there is an extra step here. Simple go to src/index.css in your IDE. You're looking to change 2 CSS blocks.
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+The first one controls most of the font styling for the app:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```
+h1, h2, h3, h4, h5, h6, #container-footer {
+    font-family: agenda, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 'helvetica neue', helvetica, arial, sans-serif;
+    line-height: 1em;
+}
+```
 
-### `npm run eject`
+The second controls the labels for the bike/dock types:
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```
+h5.descriptor {
+    font-family: agenda-condensed;
+    font-weight: 500;
+}
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+Replace the Agenda fonts with the font of your choosing in both blocks and save.
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+# Testing, Building, Etc.
 
-## Learn More
+Now, you should be good to launch the app. All the typical React NPM commands apply:
+* `npm start` – Starts the app in dev mode
+* `npm test` – Starts the app in interactive watch mode
+* `npm run build`  – Generates an optimized production build for you to upload to your site and run
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
-
-### Analyzing the Bundle Size
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
-
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `npm run build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+Have fun!
+-Nicholas Taylor
