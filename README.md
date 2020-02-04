@@ -14,7 +14,7 @@ This assumes basic familiarity with:
 * HTML, CSS, Javascript (React and Redux, specifically)
 * A webfont provider (ex. Adobe Fonts, Google Fonts)
 
-After downloading and unzipping the zip off GitHub, open your shell and cd over to the unzipped directory. In the root of the unzipped directory, simply run `npm install` to general node_modules and grab all your dependencies.
+After downloading and unzipping the zip off GitHub, open your shell and cd over to the unzipped directory. In the root of the unzipped directory, simply run `npm install` to generate node_modules and grab all your dependencies.
 
 # Font Setup
 
