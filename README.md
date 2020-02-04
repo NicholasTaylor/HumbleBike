@@ -1,6 +1,8 @@
 # HumbleBike
 _Life should be simpler. So should finding a CitiBike._
 
+**Live Site:** [https://humble.bike](https://humble.bike)
+
 HumbleBike is made to track bike and dock availability in New York's CitiBike system with a simple, text-based UI. This makes it easy for older phones or phone's with poor signal to see what's near them. Though it's made with NYC's CitiBike population in mind, it should be reasonably compatible with any bikeshare system using the General Bikeshare Feed Specification (GBFS). More on that below.
 
 # Initial Install
@@ -46,6 +48,47 @@ h5.descriptor {
 ```
 
 Replace the Agenda fonts with the font of your choosing in both blocks and save.
+
+# Other Bikeshares
+
+In theory, CitiBIke uses GBFS along with dozens of other bikeshare programs. **This has not been tested by me, so tinker at your own risk.**
+
+That said, if you wanted to try and rework the app so you can try it with your city's GBFS-compatible bikeshare program, you should open `src/middleware/index.js` in your IDE and look for these blocks of code:
+
+```
+const getStation = (input) => {
+	return fetch('https://gbfs.citibikenyc.com/gbfs/en/station_status.json')
+		.then((response)=>response.json())
+		.then((json)=>{
+			Object.assign(input,json);
+			return input;
+		})
+}
+
+const getInfo = (input) => {
+	return fetch('https://gbfs.citibikenyc.com/gbfs/en/station_information.json')
+		.then((response)=>response.json())
+		.then((json)=>{
+			Object.assign(input,json);
+			return input;
+		})
+}
+```
+
+For the uninitiated, GBFS seems to have 2 separate endpoints that generate JSON – one to give basic station information (station_information.json) and the other that gives bike availability (station_status.json). You'll need to find your bikeshare's URLs for both of these endpoints (Psst! Check out [these guys over here](https://github.com/NABSA/gbfs). The `systems.csv` file will probably have your bikeshare if it uses GBFS)
+
+Once you have your URLs, simply paste the `station_status.json` and the `station_information.json` URLs in between the single quotes of the fetch methods for `getStation` and `getInfo` respectively and test it out!
+
+**Note:** If you're doing this, you may want to hop over to `src/components/Logo.js` and edit/delete this block:
+
+```
+<h2>
+	Life should be simpler. So should finding a CitiBike.
+</h2>
+```
+
+It'd be a little awkward to talk about CitiBike at this point if you're retrofitting this to your city. `-_-;`
+
 
 # Testing, Building, Etc.
 
