@@ -22,9 +22,13 @@ html, body {
     text-align: center;
 }
 
-h1, h2, h3, h4, h5, h6, #container-footer {
+body {
     font-family: agenda, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 'helvetica neue', helvetica, arial, sans-serif;
     line-height: 1em;
+}
+
+.search {
+    font-weight: bold;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -100,4 +104,8 @@ h5.descriptor {
     position: relative;
     top: 50%;
     transform: translateY(-50%);
+}
+
+.searchOn .stationOff {
+    display: none;
 }

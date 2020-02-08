@@ -3,7 +3,7 @@ import Logo from './components/Logo'
 import CustomFonts from './components/Fonts'
 import './App.css';
 import {connect} from 'react-redux';
-import {requestDataLoad} from './actions/index';
+import {requestDataLoad, searchStations} from './actions/index';
 
 class App extends React.Component {
   componentDidMount(){
@@ -23,15 +23,31 @@ class App extends React.Component {
       <div>
         <CustomFonts />
         <div id="container">
-          <div id="content">
+          <div 
+            id="content"
+            className={this.props.search}
+          >
             <Logo />
             <div id="updated">
               <h2>
                 Last updated: {this.props.updated}
               </h2>
+              <span
+                className="search"
+              >
+                Search: <input 
+                  type="text"
+                  label="search"
+                  value={this.props.searchQuery}
+                  onChange={(e)=>this.props.searchStations(e)}
+                />
+              </span>
             </div>
             {this.props.stations.map(el =>(
-              <section key={el.station_id}>
+              <section 
+                key={el.station_id}
+                className={ el.isVisible ? 'stationOn' : 'stationOff' }
+              >
                 <div className="container-station">
                   <h3 className="station-name">
                   {el.name}{el.dist}
@@ -74,10 +90,12 @@ function mapStateToProps(state){
   return {
     stations: state.stations,
     updated: state.updated,
-    hasLocation: state.hasLocation
+    hasLocation: state.hasLocation,
+    searchQuery: state.searchQuery,
+    search: state.search
   };
 }
 
 
-export default connect(mapStateToProps,{requestDataLoad})(App);
+export default connect(mapStateToProps,{requestDataLoad, searchStations})(App);
 

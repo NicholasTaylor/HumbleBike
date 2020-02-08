@@ -1,7 +1,11 @@
-import {DATA_LOAD_SUCCESS} from '../constants/action-types';
+import {DATA_LOAD_SUCCESS, SEARCH_STATIONS} from '../constants/action-types';
 
 const stateInit = {
-	stations: []
+	stations: [],
+	updated: '',
+	hasLocation: false,
+	searchQuery: '',
+	search: 'searchOff'
 };
 
 function rootReducer(state = stateInit, action){
@@ -23,6 +27,11 @@ function rootReducer(state = stateInit, action){
 	}
 
 	if (action.type === DATA_LOAD_SUCCESS){
+		const idList = [];
+		for (let i = 0; i < state.stations.length; i++){
+			const stationOld = state.stations[i];
+			idList.push(stationOld.station_id);
+		}
 		const processedData = [];
 		const loc = action.payload.location;
 		const hasLocation = loc.isLocation ? true : false;
@@ -31,13 +40,12 @@ function rootReducer(state = stateInit, action){
 			for (let info in action.payload.info.data.stations){
 				const currentInfo = action.payload.info.data.stations[info];
 				if (currentStation.station_id === currentInfo.station_id){
-					const tempObj = {
-						station_id: currentStation.station_id,
-						classic: currentStation.num_bikes_available,
-						docks: currentStation.num_docks_available,
-						electric: currentStation.num_ebikes_available,
-						name: currentInfo.name
-					}
+					const tempObj = idList.includes(currentStation.station_id) ? { ...state.stations[idList.indexOf(currentStation.station_id)] } : {};
+					tempObj.station_id = currentStation.station_id;
+					tempObj.classic = currentStation.num_bikes_available;
+					tempObj.docks = currentStation.num_docks_available;
+					tempObj.electric = currentStation.num_ebikes_available;
+					tempObj.name = currentInfo.name;
 					if (hasLocation){
 						tempObj.dist = ' (' +haversine(loc.lat, loc.lon, currentInfo.lat, currentInfo.lon) +' mi.)';
 					}
@@ -46,20 +54,47 @@ function rootReducer(state = stateInit, action){
 				}
 			}
 		}
-		if (hasLocation){
-			var processedDataSorted = processedData.sort((a,b) => a.dist > b.dist ? 1 : -1);
-		} else {
-			processedDataSorted = processedData.sort((a,b) => a.name > b.name ? 1 : -1);
-		}
+		const processedDataSorted = hasLocation ? processedData.sort((a,b) => a.dist > b.dist ? 1 : -1) : processedData.sort((a,b) => a.name > b.name ? 1 : -1);
 		const updated = new Date();
 		const convertTwoDigits = (num) => {
 			return num >= 10 ? num : '0' + num;
 		}
+		const updatedString = convertTwoDigits((updated.getMonth() + 1)) +'/' + convertTwoDigits(updated.getDate()) +'/' +(updated.getYear() + 1900) +' ' +convertTwoDigits(updated.getHours()) +':' +convertTwoDigits(updated.getMinutes()) +':' +convertTwoDigits(updated.getSeconds());
 		return Object.assign({}, state, {
 			stations: processedDataSorted,
 			updated: convertTwoDigits((updated.getMonth() + 1)) +'/' + convertTwoDigits(updated.getDate()) +'/' +(updated.getYear() + 1900) +' ' +convertTwoDigits(updated.getHours()) +':' +convertTwoDigits(updated.getMinutes()) +':' +convertTwoDigits(updated.getSeconds()),
-			hasLocation: hasLocation
+			hasLocation: hasLocation,
+			search: state.search
 		});
+	}
+	if (action.type === SEARCH_STATIONS){
+		const searchQuery = action.payload.searchQuery;
+		const stationsSearch = Object.assign([],state.stations);
+		if (searchQuery.length > 0){
+			for (let i = 0; i < stationsSearch.length; i++){
+				const currentStation = stationsSearch[i]
+				if (currentStation.name.toLowerCase().includes(searchQuery.toLowerCase())){
+					currentStation.isVisible = true
+				} else {
+					currentStation.isVisible = false
+				}
+			}
+			return Object.assign({},state,{
+				searchQuery: searchQuery,
+				stations: stationsSearch,
+				search: 'searchOn'
+			})
+		} else {
+			for (let i = 0; i < stationsSearch.length; i++){
+				const currentStation = stationsSearch[i]
+				currentStation.isVisible = false
+				}
+			return Object.assign({},state,{
+				searchQuery: searchQuery,
+				stations: stationsSearch,
+				search: 'searchOff'
+			})
+		}
 	}
 	return state;
 }
