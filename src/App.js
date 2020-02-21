@@ -3,7 +3,7 @@ import Logo from './components/Logo'
 import CustomFonts from './components/Fonts'
 import './App.css';
 import {connect} from 'react-redux';
-import {requestDataLoad, searchStations} from './actions/index';
+import {requestDataLoad, searchStations, filterElecToggle} from './actions/index';
 
 class App extends React.Component {
   componentDidMount(){
@@ -25,7 +25,7 @@ class App extends React.Component {
         <div id="container">
           <div 
             id="content"
-            className={this.props.search}
+            className={this.props.search + ' ' +this.props.filterElec}
           >
             <Logo />
             <div id="updated">
@@ -42,11 +42,21 @@ class App extends React.Component {
                   onChange={(e)=>this.props.searchStations(e)}
                 />
               </span>
+              <span
+                className="search"
+              >
+                Electric Only? <input
+                  type="checkbox"
+                  label="Electric Only?"
+                  onChange={(e)=>this.props.filterElecToggle(e)}
+                  checked={this.props.filterElec === 'filterElecOn' ? 'checked' : ''}
+                />
+              </span>
             </div>
             {this.props.stations.map(el =>(
               <section 
                 key={el.station_id}
-                className={ el.isVisible ? 'stationOn' : 'stationOff' }
+                className={ (el.isVisible ? 'stationOn' : 'stationOff') + ' ' + (el.electric > 0 ? 'elecOn' : 'elecOff') }
               >
                 <div className="container-station">
                   <h3 className="station-name">
@@ -92,10 +102,11 @@ function mapStateToProps(state){
     updated: state.updated,
     hasLocation: state.hasLocation,
     searchQuery: state.searchQuery,
-    search: state.search
+    search: state.search,
+    filterElec: state.filterElec
   };
 }
 
 
-export default connect(mapStateToProps,{requestDataLoad, searchStations})(App);
+export default connect(mapStateToProps,{requestDataLoad, searchStations, filterElecToggle})(App);
 

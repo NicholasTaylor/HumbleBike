@@ -1,11 +1,12 @@
-import {DATA_LOAD_SUCCESS, SEARCH_STATIONS} from '../constants/action-types';
+import {DATA_LOAD_SUCCESS, SEARCH_STATIONS, FILTER_ELEC} from '../constants/action-types';
 
 const stateInit = {
 	stations: [],
 	updated: '',
 	hasLocation: false,
 	searchQuery: '',
-	search: 'searchOff'
+	search: 'searchOff',
+	filterElec: 'filterElecOff' 
 };
 
 function rootReducer(state = stateInit, action){
@@ -95,6 +96,12 @@ function rootReducer(state = stateInit, action){
 				search: 'searchOff'
 			})
 		}
+	}
+
+	if (action.type === FILTER_ELEC){
+		const tempObj = {...state};
+		tempObj.filterElec = state.filterElec === 'filterElecOff' ? 'filterElecOn' : 'filterElecOff';
+		return Object.assign({},tempObj)
 	}
 	return state;
 }
