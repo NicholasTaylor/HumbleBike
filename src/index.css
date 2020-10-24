@@ -29,8 +29,8 @@ body {
 
 .search {
     font-weight: bold;
-    margin: 0.5em 0;
-    display: block;
+    margin: 0.5em;
+    display: inline-block;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -110,4 +110,16 @@ h5.descriptor {
 
 .searchOn .stationOff, .filterElecOn .elecOff {
     display: none;
+}
+
+.btn {
+    border: #808080 1px solid;
+    display: inline-block;
+    padding: .2em .25em;
+    border-radius: .25em;
+}
+
+.btn-icon {
+    height: auto;
+    width: 1em;
 }
