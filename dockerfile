@@ -8,6 +8,9 @@ COPY package.json ./
 COPY package-lock.json ./
 RUN npm install
 
+# This helps avoid EACCES permission errors that can happen in Node images.
+RUN chown -R node.node /app
+
 COPY . ./
 
 CMD ["npm", "start"]
