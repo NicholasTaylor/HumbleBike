@@ -12,7 +12,7 @@
 /build
 
 # fonts
-/constants/fonts.js
+src/constants/fonts.js
 
 # misc
 .DS_Store
