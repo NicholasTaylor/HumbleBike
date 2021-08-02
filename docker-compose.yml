@@ -2,11 +2,9 @@ version: '3.8'
 
 services:
     frontend:
-        build:
-            context: .
-            dockerfile: dockerfile
+        build: ./frontend
         volumes: 
-            - '.:/app'
+            - './frontend:/app'
             - '/app/node_modules'
         ports: 
             - 3000:3000
