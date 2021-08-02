@@ -1,7 +1,0 @@
-FROM python:3.9.6-alpine
-
-RUN mkdir -p /opt/humblebike_datapull
-WORKDIR /opt/humblebike_datapull
-
-COPY datapull_requirements.txt /opt/humblebike_datapull/
-RUN pip install -r /opt/humblebike_datapull/datapull_requirements.txt

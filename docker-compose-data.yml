@@ -2,4 +2,7 @@ version: "3.8"
 
 services: 
     datapull:
-        build:
+        build: ./datapull
+        volumes: 
+            - './datapull:/opt/datapull'
+        command: python app.py
