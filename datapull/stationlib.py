@@ -1,3 +1,13 @@
+class Station:
+
+class DataPull:
+    def __init__(self, info, status):
+        self.info = info
+        self.status = status
+    def generate_station(self):
+        station_dict = dict(self.info)
+        station_dict.update(self.status)
+
 class Status:
     def __init__(self, legacy_id, station_status, is_renting, is_returning, num_ebikes_available, num_bikes_disabled, eightd_has_available_keys, last_reported, num_bikes_available, num_docks_disabled, is_installed, station_id, num_docks_available):
         self.id = station_id
@@ -21,4 +31,14 @@ class Info:
         self.name_short = short_name
         self.lat = lat
         self.lon = lon
-        
+        self.eightd_has_key_dispenser = eightd_has_key_dispenser
+        self.region_id = region_id
+        self.capacity = capacity
+        self.rental_methods = rental_methods
+        self.electric_bike_surcharge_waiver = electric_bike_surcharge_waiver
+        self.legacy_id = legacy_id
+        self.station_type = station_type
+        self.external_id = external_id
+        self.has_kiosk = has_kiosk
+        self.eightd_station_services = eightd_station_services
+        self.rental_uris = rental_uris
