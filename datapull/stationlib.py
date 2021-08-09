@@ -1,4 +1,18 @@
 class Station:
+    def __init__(self, station_id, station_status, is_installed, is_renting, is_returning, num_bikes_available, num_ebikes_available, num_bikes_disabled, num_docks_disabled, lat, lon, region_id, electric_bike_surcharge_waiver):
+        self.station_id = station_id
+        self.station_status = station_status
+        self.is_installed = is_installed
+        self.is_renting = is_renting
+        self.is_returning = is_returning
+        self.num_bikes_available = num_bikes_available
+        self.num_ebikes_available = num_ebikes_available
+        self.num_bikes_disabled = num_bikes_disabled
+        self.num_docks_disabled = num_docks_disabled
+        self.lat = lat
+        self.lon = lon
+        self.region_id = region_id
+        self.electric_bike_surcharge_waiver = electric_bike_surcharge_waiver
 
 class DataPull:
     def __init__(self, info, status):
