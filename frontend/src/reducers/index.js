@@ -1,4 +1,4 @@
-import {DATA_LOAD_SUCCESS, SEARCH_STATIONS, FILTER_ELEC} from '../constants/action-types';
+import {DATA_LOAD_SUCCESS, SEARCH_STATIONS, FILTER_ELEC, FILTER_DOCK, FILTER_ELEC_FREE} from '../constants/action-types';
 
 const stateInit = {
 	stations: [],
@@ -6,7 +6,9 @@ const stateInit = {
 	hasLocation: false,
 	searchQuery: '',
 	search: 'searchOff',
-	filterElec: 'filterElecOff' 
+	filterElec: 'filterElecOff', 
+	filterElecFree: 'filterElecFreeOff',
+	filterDock: 'filterDockOff' 
 };
 
 function rootReducer(state = stateInit, action){
@@ -43,7 +45,7 @@ function rootReducer(state = stateInit, action){
 				if (currentStation.station_id === currentInfo.station_id){
 					const tempObj = idList.includes(currentStation.station_id) ? { ...state.stations[idList.indexOf(currentStation.station_id)] } : {};
 					tempObj.station_id = currentStation.station_id;
-					tempObj.classic = currentStation.num_bikes_available;
+					tempObj.classic = currentStation.num_bikes_available - currentStation.num_ebikes_available;
 					tempObj.docks = currentStation.num_docks_available;
 					tempObj.electric = currentStation.num_ebikes_available;
 					tempObj.name = currentInfo.name;
@@ -60,7 +62,6 @@ function rootReducer(state = stateInit, action){
 		const convertTwoDigits = (num) => {
 			return num >= 10 ? num : '0' + num;
 		}
-		const updatedString = convertTwoDigits((updated.getMonth() + 1)) +'/' + convertTwoDigits(updated.getDate()) +'/' +(updated.getYear() + 1900) +' ' +convertTwoDigits(updated.getHours()) +':' +convertTwoDigits(updated.getMinutes()) +':' +convertTwoDigits(updated.getSeconds());
 		return Object.assign({}, state, {
 			stations: processedDataSorted,
 			updated: convertTwoDigits((updated.getMonth() + 1)) +'/' + convertTwoDigits(updated.getDate()) +'/' +(updated.getYear() + 1900) +' ' +convertTwoDigits(updated.getHours()) +':' +convertTwoDigits(updated.getMinutes()) +':' +convertTwoDigits(updated.getSeconds()),
@@ -101,6 +102,18 @@ function rootReducer(state = stateInit, action){
 	if (action.type === FILTER_ELEC){
 		const tempObj = {...state};
 		tempObj.filterElec = state.filterElec === 'filterElecOff' ? 'filterElecOn' : 'filterElecOff';
+		return Object.assign({},tempObj)
+	}
+
+	if (action.type === FILTER_ELEC_FREE){
+		const tempObj = {...state};
+		tempObj.filterElecFree = state.filterElecFree === 'filterElecFreeOff' ? 'filterElecFreeOn' : 'filterElecFreeOff';
+		return Object.assign({},tempObj)
+	}
+
+	if (action.type === FILTER_DOCK){
+		const tempObj = {...state};
+		tempObj.filterDock = state.filterDock === 'filterDockOff' ? 'filterDockOn' : 'filterDockOff';
 		return Object.assign({},tempObj)
 	}
 	return state;

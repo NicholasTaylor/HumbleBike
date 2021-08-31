@@ -3,7 +3,7 @@ import Logo from './components/Logo'
 import CustomFonts from './components/Fonts'
 import './App.css';
 import {connect} from 'react-redux';
-import {requestDataLoad, searchStations, filterElecToggle} from './actions/index';
+import {requestDataLoad, searchStations, filterElecToggle, filterDockToggle, filterElecFreeToggle} from './actions/index';
 
 class App extends React.Component {
   componentDidMount(){
@@ -25,10 +25,12 @@ class App extends React.Component {
         <div id="container">
           <div
             id="content"
-            className={this.props.search + ' ' +this.props.filterElec}
+            className={this.props.search + ' ' +this.props.filterElec + ' ' +this.props.filterElecFree + ' ' +this.props.filterDock}
           >
             <Logo />
-            <div id="updated">
+            <div
+              className="panel"
+            >
               <h2>
                 Last updated: {this.props.updated}
               </h2>
@@ -37,7 +39,7 @@ class App extends React.Component {
                 onClick={this.props.requestDataLoad}
               >
                 Refresh
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="btn-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="btn-icon">
                   <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
                 </svg>
               </span>
@@ -54,18 +56,67 @@ class App extends React.Component {
               <span
                 className="search"
               >
-                Electric Only? <input
+                <span
+                    className="checkbox-text"
+                  >
+                    Electric Only?
+                </span><input
                   type="checkbox"
                   label="Electric Only?"
                   onChange={(e)=>this.props.filterElecToggle(e)}
                   checked={this.props.filterElec === 'filterElecOn' ? 'checked' : ''}
                 />
               </span>
+              <span
+                className="search"
+              >
+                <span
+                    className="checkbox-text"
+                  >
+                    Docks Only?
+                </span><input
+                  type="checkbox"
+                  label="Docks Only?"
+                  onChange={(e)=>this.props.filterDockToggle(e)}
+                  checked={this.props.filterDock === 'filterDockOn' ? 'checked' : ''}
+                />
+              </span>
+            </div>
+            <div
+              id="ebike-no-classic"
+            >
+              <div
+                className="panel"
+              >
+                <span
+                  className="search"
+                >
+                  <span
+                    className="checkbox-text"
+                  >
+                    Electric with No Classic?
+                  </span><input
+                    type="checkbox"
+                    label="Electric with No Classic?"
+                    onChange={(e)=>this.props.filterElecFreeToggle(e)}
+                    checked={this.props.filterElecFree === 'filterElecFreeOn' ? 'checked' : ''}
+                  />
+                </span>
+              </div>
+              <div
+                className="panel"
+              >
+                <span
+                  className="search"
+                >
+                  <i>(CitiBike waives e-bike charges if there are only e-bikes at a station at the start of the ride)</i>
+                </span>
+              </div>
             </div>
             {this.props.stations.map(el =>(
               <section
                 key={el.station_id}
-                className={ (el.isVisible ? 'stationOn' : 'stationOff') + ' ' + (el.electric > 0 ? 'elecOn' : 'elecOff') }
+                className={ (el.isVisible ? 'stationOn' : 'stationOff') + ' ' + (el.electric > 0 ? 'elecOn' : 'elecOff') + ' ' + (el.docks > 0 ? 'dockOn' : 'dockOff') + ' ' + (el.electric > 0 && el.classic === 0 ? 'elecFreeOn' : 'elecFreeOff') }
               >
                 <div className="container-station">
                   <h3 className="station-name">
@@ -112,9 +163,11 @@ function mapStateToProps(state){
     hasLocation: state.hasLocation,
     searchQuery: state.searchQuery,
     search: state.search,
-    filterElec: state.filterElec
+    filterElec: state.filterElec,
+    filterElecFree: state.filterElecFree,
+    filterDock: state.filterDock
   };
 }
 
 
-export default connect(mapStateToProps,{requestDataLoad, searchStations, filterElecToggle})(App);
+export default connect(mapStateToProps,{requestDataLoad, searchStations, filterElecToggle, filterDockToggle, filterElecFreeToggle})(App);
