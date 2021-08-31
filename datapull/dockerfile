@@ -1,0 +1,7 @@
+FROM python:3.9.6-alpine
+
+RUN mkdir -p /opt/datapull
+WORKDIR /opt/datapull
+
+COPY requirements.txt /opt/datapull/
+RUN pip install -r /opt/datapull/requirements.txt

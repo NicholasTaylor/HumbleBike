@@ -23,8 +23,6 @@ const getLocation = (input) => {
 	)	
 }
 
-
-
 const getStation = (input) => {
 	return fetch('https://gbfs.citibikenyc.com/gbfs/en/station_status.json')
 		.then((response)=>response.json())
