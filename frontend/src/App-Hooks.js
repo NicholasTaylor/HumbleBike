@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import Logo from './components/Logo'
 import CustomFonts from './components/Fonts'
 import './App.css';
-import {connect} from 'react-redux';
-import {requestDataLoad, searchStations, filterElecToggle, filterDockToggle, filterElecFreeToggle} from './actions/index';
+import { connect } from 'react-redux';
+import { requestDataLoad, searchStations, filterElecToggle, filterDockToggle, filterElecFreeToggle } from './actions/index';
 
 const App = () => {
   const [stations, setStations] = useState([]);
@@ -14,13 +14,13 @@ const App = () => {
   const [filterElec, setFilterElec] = useState('filterElecOff');
   const [filterElecFree, setFilterElecFree] = useState('filterElecFreeOff');
   const [filterDock, setFilterDock] = useState('filterDockOff');
-  return(
+  return (
     <div>
       <CustomFonts />
       <div id="container">
         <div
           id="content"
-          className={{search} + ' ' +{filterElec} + ' ' +{filterElecFree} + ' ' +{filterDock}}
+          className={{ search } + ' ' + { filterElec } + ' ' + { filterElecFree } + ' ' + { filterDock }}
         >
           <Logo />
           <div
@@ -45,20 +45,20 @@ const App = () => {
                 type="text"
                 label="search"
                 value={searchQuery}
-                onChange={(e)=>this.props.searchStations(e)}
+                onChange={(e) => this.props.searchStations(e)}
               />
             </span>
             <span
               className="search"
             >
               <span
-                  className="checkbox-text"
-                >
-                  Electric Only?
+                className="checkbox-text"
+              >
+                Electric Only?
               </span><input
                 type="checkbox"
                 label="Electric Only?"
-                onChange={(e)=>this.props.filterElecToggle(e)}
+                onChange={(e) => this.props.filterElecToggle(e)}
                 checked={filterElec === 'filterElecOn' ? 'checked' : ''}
               />
             </span>
@@ -66,13 +66,13 @@ const App = () => {
               className="search"
             >
               <span
-                  className="checkbox-text"
-                >
-                  Docks Only?
+                className="checkbox-text"
+              >
+                Docks Only?
               </span><input
                 type="checkbox"
                 label="Docks Only?"
-                onChange={(e)=>this.props.filterDockToggle(e)}
+                onChange={(e) => this.props.filterDockToggle(e)}
                 checked={filterDock === 'filterDockOn' ? 'checked' : ''}
               />
             </span>
@@ -93,8 +93,8 @@ const App = () => {
                 </span><input
                   type="checkbox"
                   label="Electric with No Classic?"
-                  onChange={(e)=>this.props.filterElecFreeToggle(e)}
-                  checked={{filterElecFree} === 'filterElecFreeOn' ? 'checked' : ''}
+                  onChange={(e) => this.props.filterElecFreeToggle(e)}
+                  checked={{ filterElecFree } === 'filterElecFreeOn' ? 'checked' : ''}
                 />
               </span>
             </div>
@@ -108,37 +108,37 @@ const App = () => {
               </span>
             </div>
           </div>
-          {stations.map(el =>(
+          {stations.map(el => (
             <section
               key={el.station_id}
-              className={ (el.isVisible ? 'stationOn' : 'stationOff') + ' ' + (el.electric > 0 ? 'elecOn' : 'elecOff') + ' ' + (el.docks > 0 ? 'dockOn' : 'dockOff') + ' ' + (el.electric > 0 && el.classic === 0 ? 'elecFreeOn' : 'elecFreeOff') }
+              className={(el.isVisible ? 'stationOn' : 'stationOff') + ' ' + (el.electric > 0 ? 'elecOn' : 'elecOff') + ' ' + (el.docks > 0 ? 'dockOn' : 'dockOff') + ' ' + (el.electric > 0 && el.classic === 0 ? 'elecFreeOn' : 'elecFreeOff')}
             >
               <div className="container-station">
                 <h3 className="station-name">
-                {el.name}{el.dist}
+                  {el.name}{el.dist}
                 </h3>
                 <div className="infoSection classic-bikes">
                   <h4 className="bikes-remaining">
-                  {el.classic}
+                    {el.classic}
                   </h4>
                   <h5 className="descriptor">
-                  Classic
+                    Classic
                   </h5>
                 </div>
                 <div className="infoSection ebikes">
                   <h4 className="ebikes-remaining">
-                  {el.electric}
+                    {el.electric}
                   </h4>
                   <h5 className="descriptor">
-                  Electric
+                    Electric
                   </h5>
                 </div>
                 <div className="infoSection docks">
                   <h4 className="docks-remaining">
-                  {el.docks}
+                    {el.docks}
                   </h4>
                   <h5 className="descriptor">
-                  Docks
+                    Docks
                   </h5>
                 </div>
               </div>
@@ -151,20 +151,20 @@ const App = () => {
 }
 
 class App extends React.Component {
-  componentDidMount(){
+  componentDidMount() {
     this.props.requestDataLoad();
-    setInterval(this.props.requestDataLoad,10000);
+    setInterval(this.props.requestDataLoad, 10000);
 
   }
 
 
-  componentWillUnmount(){
-    clearInterval(this.props.requestDataLoad,10000);
+  componentWillUnmount() {
+    clearInterval(this.props.requestDataLoad, 10000);
 
   }
 }
 
-function mapStateToProps(state){
+function mapStateToProps(state) {
   return {
     stations: state.stations,
     updated: state.updated,
@@ -178,4 +178,4 @@ function mapStateToProps(state){
 }
 
 
-export default connect(mapStateToProps,{requestDataLoad, searchStations, filterElecToggle, filterDockToggle, filterElecFreeToggle})(App);
+export default connect(mapStateToProps, { requestDataLoad, searchStations, filterElecToggle, filterDockToggle, filterElecFreeToggle })(App);
