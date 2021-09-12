@@ -2,30 +2,30 @@ import React from 'react';
 import Logo from './components/Logo'
 import CustomFonts from './components/Fonts'
 import './App.css';
-import {connect} from 'react-redux';
-import {requestDataLoad, searchStations, filterElecToggle, filterDockToggle, filterElecFreeToggle} from './actions/index';
+import { connect } from 'react-redux';
+import { requestDataLoad, searchStations, filterElecToggle, filterDockToggle, filterElecFreeToggle } from './actions/index';
 
 class App extends React.Component {
-  componentDidMount(){
+  componentDidMount() {
     this.props.requestDataLoad();
-    setInterval(this.props.requestDataLoad,10000);
+    setInterval(this.props.requestDataLoad, 10000);
 
   }
 
 
-  componentWillUnmount(){
-    clearInterval(this.props.requestDataLoad,10000);
+  componentWillUnmount() {
+    clearInterval(this.props.requestDataLoad, 10000);
 
   }
 
-  render(){
+  render() {
     return (
       <div>
         <CustomFonts />
         <div id="container">
           <div
             id="content"
-            className={this.props.search + ' ' +this.props.filterElec + ' ' +this.props.filterElecFree + ' ' +this.props.filterDock}
+            className={this.props.search + ' ' + this.props.filterElec + ' ' + this.props.filterElecFree + ' ' + this.props.filterDock}
           >
             <Logo />
             <div
@@ -50,20 +50,20 @@ class App extends React.Component {
                   type="text"
                   label="search"
                   value={this.props.searchQuery}
-                  onChange={(e)=>this.props.searchStations(e)}
+                  onChange={(e) => this.props.searchStations(e)}
                 />
               </span>
               <span
                 className="search"
               >
                 <span
-                    className="checkbox-text"
-                  >
-                    Electric Only?
+                  className="checkbox-text"
+                >
+                  Electric Only?
                 </span><input
                   type="checkbox"
                   label="Electric Only?"
-                  onChange={(e)=>this.props.filterElecToggle(e)}
+                  onChange={(e) => this.props.filterElecToggle(e)}
                   checked={this.props.filterElec === 'filterElecOn' ? 'checked' : ''}
                 />
               </span>
@@ -71,13 +71,13 @@ class App extends React.Component {
                 className="search"
               >
                 <span
-                    className="checkbox-text"
-                  >
-                    Docks Only?
+                  className="checkbox-text"
+                >
+                  Docks Only?
                 </span><input
                   type="checkbox"
                   label="Docks Only?"
-                  onChange={(e)=>this.props.filterDockToggle(e)}
+                  onChange={(e) => this.props.filterDockToggle(e)}
                   checked={this.props.filterDock === 'filterDockOn' ? 'checked' : ''}
                 />
               </span>
@@ -98,7 +98,7 @@ class App extends React.Component {
                   </span><input
                     type="checkbox"
                     label="Electric with No Classic?"
-                    onChange={(e)=>this.props.filterElecFreeToggle(e)}
+                    onChange={(e) => this.props.filterElecFreeToggle(e)}
                     checked={this.props.filterElecFree === 'filterElecFreeOn' ? 'checked' : ''}
                   />
                 </span>
@@ -113,37 +113,45 @@ class App extends React.Component {
                 </span>
               </div>
             </div>
-            {this.props.stations.map(el =>(
+            {this.props.stations.map(el => (
               <section
                 key={el.station_id}
-                className={ (el.isVisible ? 'stationOn' : 'stationOff') + ' ' + (el.electric > 0 ? 'elecOn' : 'elecOff') + ' ' + (el.docks > 0 ? 'dockOn' : 'dockOff') + ' ' + (el.electric > 0 && el.classic === 0 ? 'elecFreeOn' : 'elecFreeOff') }
+                className={(el.isVisible ? 'stationOn' : 'stationOff') + ' ' + (el.electric > 0 ? 'elecOn' : 'elecOff') + ' ' + (el.docks > 0 ? 'dockOn' : 'dockOff') + ' ' + (el.electric > 0 && el.classic === 0 ? 'elecFreeOn' : 'elecFreeOff')}
               >
                 <div className="container-station">
                   <h3 className="station-name">
-                  {el.name}{el.dist}
+                    {el.name}{el.dist}
                   </h3>
                   <div className="infoSection classic-bikes">
                     <h4 className="bikes-remaining">
-                    {el.classic}
+                      {el.classic}
                     </h4>
                     <h5 className="descriptor">
-                    Classic
+                      Classic
+                    </h5>
+                  </div>
+                  <div className="infoSection smart-bikes">
+                    <h4 className="bikes-remaining">
+                      {el.smart}
+                    </h4>
+                    <h5 className="descriptor">
+                      Smart
                     </h5>
                   </div>
                   <div className="infoSection ebikes">
                     <h4 className="ebikes-remaining">
-                    {el.electric}
+                      {el.electric}
                     </h4>
                     <h5 className="descriptor">
-                    Electric
+                      Electric
                     </h5>
                   </div>
                   <div className="infoSection docks">
                     <h4 className="docks-remaining">
-                    {el.docks}
+                      {el.docks}
                     </h4>
                     <h5 className="descriptor">
-                    Docks
+                      Docks
                     </h5>
                   </div>
                 </div>
@@ -156,7 +164,7 @@ class App extends React.Component {
   }
 }
 
-function mapStateToProps(state){
+function mapStateToProps(state) {
   return {
     stations: state.stations,
     updated: state.updated,
@@ -170,4 +178,4 @@ function mapStateToProps(state){
 }
 
 
-export default connect(mapStateToProps,{requestDataLoad, searchStations, filterElecToggle, filterDockToggle, filterElecFreeToggle})(App);
+export default connect(mapStateToProps, { requestDataLoad, searchStations, filterElecToggle, filterDockToggle, filterElecFreeToggle })(App);

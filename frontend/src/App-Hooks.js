@@ -14,6 +14,25 @@ const App = () => {
   const [filterElec, setFilterElec] = useState('filterElecOff');
   const [filterElecFree, setFilterElecFree] = useState('filterElecFreeOff');
   const [filterDock, setFilterDock] = useState('filterDockOff');
+
+  const reqDataLoad = () => {
+    const rawLocation = {};
+    const rawStation = {};
+    const rawInfo = {};
+    Promise.all([getLocation(rawLocation), getStation(rawStation), getInfo(rawInfo)])
+      .then(
+        (rawData) => {
+          dispatch({
+            type: DATA_LOAD_SUCCESS,
+            payload: {
+              location: rawLocation,
+              stations: rawStation,
+              info: rawInfo
+            }
+          })
+        }
+      )
+  }
   return (
     <div>
       <CustomFonts />

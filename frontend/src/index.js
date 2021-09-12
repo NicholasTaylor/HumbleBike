@@ -2,14 +2,14 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './bootstrap.min.css';
 import './index.css';
-import App from './App';
+import AppHooksTest from './App-Hooks-Test';
 import store from './store/index.js'
-import {Provider} from 'react-redux';
+import { Provider } from 'react-redux';
 
 ReactDOM.render(
 	<Provider
 		store={store}
 	>
-		<App />
+		<AppHooksTest />
 	</Provider>,
-document.getElementById('root'));
+	document.getElementById('root'));
