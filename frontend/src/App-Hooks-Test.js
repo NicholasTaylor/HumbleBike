@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import GetLocation from './components/GetLocation';
 import GetStationInfo from './components/GetStationInfo';
 
