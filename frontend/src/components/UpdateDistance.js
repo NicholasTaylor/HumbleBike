@@ -1,4 +1,5 @@
-export default function UpdateDistance (latitude, longitude, error, stations) {
+export default function UpdateDistance (latitude, longitude, stations) {
+    console.log('Fired.')
     const haversine = (userLat, userLon, stationLat, stationLon) => {
         const degToRad = (numDegree) => {
             return numDegree * Math.PI / 180;
@@ -14,14 +15,16 @@ export default function UpdateDistance (latitude, longitude, error, stations) {
         const distance = (Math.round((radius * partTwo * 0.621371) * 100)) / 100;
         return distance;
     }
-    const newStations = {}
+    const newStations = [];
     for (let station_idx in stations) {
         let station = stations[station_idx];
         let output = {
           station_id: station.station_id,
+          lat: station.lat,
+          lon: station.lon,
           dist: haversine(latitude, longitude, station.lat, station.lon)
         }
         newStations.push(output);
       }
-      return newStations
+    return newStations;
 }

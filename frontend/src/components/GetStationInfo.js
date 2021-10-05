@@ -9,8 +9,11 @@ export default function GetStationInfo () {
         const payload = [];
         for (let station_idx in allStations) {
           let station = allStations[station_idx];
+          console.log('lat:' +station.lat)
           let output = {
             station_id: station.station_id,
+            lat: station.lat,
+            lon: station.lon,
             dist: NaN
           }
           payload.push(output);
