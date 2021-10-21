@@ -18,12 +18,7 @@ export default function UpdateDistance (latitude, longitude, stations) {
     const newStations = [];
     for (let station_idx in stations) {
         let station = stations[station_idx];
-        let output = {
-          station_id: station.station_id,
-          lat: station.lat,
-          lon: station.lon,
-          dist: haversine(latitude, longitude, station.lat, station.lon)
-        }
+        let output = Object.assign(station,{dist:haversine(latitude, longitude, station.lat, station.lon)})
         newStations.push(output);
       }
     return newStations;
