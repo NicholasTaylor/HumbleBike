@@ -1,12 +1,28 @@
 import React from 'react';
 import { css, jsx } from '@emotion/react';
-import { fontWeight } from '../constants/style';
+import { fontWeight, fontSize } from '../constants/style';
 /** @jsxRuntime classic */
 /** @jsx jsx */;
 
 export default function Station(props) {
     const station = props.data;
     const distInfo = station.dist ? ' (' +station.dist +'mi.)' : '';
+    const unWidow = (str) => {
+        const arr = str.split(' ');
+        let output = '';
+        let spaceChar;
+        for (let i=0; i < arr.length; i++) {
+            if (i === arr.length - 1){
+                spaceChar = '';
+            } else if (i === arr.length - 2){
+                spaceChar = '\u00A0';
+            } else {
+                spaceChar = ' ';
+            }
+            output += arr[i] + spaceChar;
+        }
+        return output;
+    }
     return(
         <div>
             <section
@@ -22,10 +38,19 @@ export default function Station(props) {
                     <h3
                         css={css`
                             font-weight: ${fontWeight['bold']};
+                            font-size: ${fontSize[3]};
                         `}
                     >
-                        {station.name}{distInfo}
+                        {unWidow(station.name)}
                     </h3>
+                    <h4
+                        css={css`
+                            font-weight: ${fontWeight['bold']};
+                            font-size: ${fontSize[2]};
+                        `}
+                    >
+                        {distInfo}
+                    </h4>
                     <div 
                         css={css`
                             margin: 0;
@@ -38,12 +63,16 @@ export default function Station(props) {
                     >
                         <h4
                             className="bikes-remaining"
+                            css={css`
+                                font-size: ${fontSize[6]};
+                            `}
                         >
                             {station.classic}
                         </h4>
                         <h5 
                             css={css`
                                 font-weight: ${fontWeight['light']};
+                                font-size: ${fontSize[2]};
                             `}
                         >
                             Classic
@@ -61,12 +90,16 @@ export default function Station(props) {
                     >
                         <h4 
                             className="ebikes-remaining"
+                            css={css`
+                                font-size: ${fontSize[6]};
+                            `}
                         >
                             {station.electric}
                         </h4>
                         <h5 
                             css={css`
                                 font-weight: ${fontWeight['light']};
+                                font-size: ${fontSize[2]};
                             `}
                         >
                             Electric
@@ -84,12 +117,16 @@ export default function Station(props) {
                     >
                         <h4 
                             className="docks-remaining"
+                            css={css`
+                                font-size: ${fontSize[6]};
+                            `}
                         >
                             {station.docks}
                         </h4>
                         <h5 
                             css={css`
                                 font-weight: ${fontWeight['light']};
+                                font-size: ${fontSize[2]};
                             `}
                         >
                             Docks
