@@ -1,5 +1,5 @@
 export default function UpdateDistance (latitude, longitude, stations) {
-    console.log('Fired.')
+    console.log(`Fired. Lat: ${latitude}, Lon: ${longitude}`);
     const haversine = (userLat, userLon, stationLat, stationLon) => {
         const degToRad = (numDegree) => {
             return numDegree * Math.PI / 180;
