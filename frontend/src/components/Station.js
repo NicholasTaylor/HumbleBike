@@ -1,4 +1,3 @@
-import React from 'react';
 import { css, jsx } from '@emotion/react';
 import { fontWeight, fontSize } from '../constants/style';
 /** @jsxRuntime classic */

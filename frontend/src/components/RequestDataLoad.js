@@ -1,20 +1,5 @@
 import React from react;
-
-const haversine = (userLat, userLon, stationLat, stationLon) => {
-  const degToRad = (numDegree) => {
-    return numDegree * Math.PI / 180;
-  }
-
-  const radius = 6371;
-  const userLatRad = degToRad(userLat);
-  const stationLatRad = degToRad(stationLat);
-  const deltaLatRad = degToRad((userLat - stationLat));
-  const deltaLonRad = degToRad((userLon - stationLon));
-  const partOne = Math.sin(deltaLatRad / 2) * Math.sin(deltaLatRad / 2) + Math.sin(deltaLonRad / 2) * Math.sin(deltaLonRad / 2) * Math.cos(userLatRad) * Math.cos(stationLatRad);
-  const partTwo = Math.atan2(Math.sqrt(partOne), Math.sqrt(1 - partOne)) * 2;
-  const distance = (Math.round((radius * partTwo * 0.621371) * 100)) / 100;
-  return distance;
-}
+import Haversine from 'Haversine';
 
 const idList = [];
 for (let i = 0; i < state.stations.length; i++) {
@@ -37,7 +22,7 @@ for (let station in action.payload.stations.data.stations) {
       tempObj.electric = currentStation.num_ebikes_available;
       tempObj.name = currentInfo.name;
       if (hasLocation) {
-        tempObj.dist = ' (' + haversine(loc.lat, loc.lon, currentInfo.lat, currentInfo.lon) + ' mi.)';
+        tempObj.dist = ' (' + Haversine(loc.lat, loc.lon, currentInfo.lat, currentInfo.lon) + ' mi.)';
       }
       processedData.push(tempObj);
       break;
