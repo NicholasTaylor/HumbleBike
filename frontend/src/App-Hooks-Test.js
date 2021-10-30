@@ -30,7 +30,6 @@ export default function AppHooksTest() {
           latitude: coords.latitude,
           longitude: coords.longitude
         });
-        clearInterval(autoRefresh);
       }
     };
 
@@ -88,20 +87,23 @@ export default function AppHooksTest() {
         return;
     }
     const update = geo.watchPosition(onLocationChange, onError);
-    return () => geo.clearWatch(update);
+    return () => {
+      geo.clearWatch(update);
+      clearInterval(autoRefresh);
+    };
   },[location,error, timedRefresh])
 
   return (
     <div>
       <CustomFonts />
-        <div id="container">
-          <div
-            id="content"
-          >
-            <Logo />
-            { stations.map(station => <Station key={station.station_id} data={station} />) }
-          </div>
+      <div id="container">
+        <div
+          id="content"
+        >
+          <Logo />
+          { stations.map(station => <Station key={station.station_id} data={station} />) }
         </div>
+      </div>
     </div>
   );
 }
