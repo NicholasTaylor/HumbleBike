@@ -2,31 +2,10 @@ html, body {
     font-size: 100%;
 }
 
-#container {
-    width: 100vw;
-    position: relative;
-}
-
-#content {
-    position: absolute;
-    width: 90vw;
-    left: 50vw;
-    transform: translateX(-50%);
-}
-
-#title {
-    text-align: center;
-}
-
 #ebike-no-classic {
     margin: 1em 0;
     padding: 1em 0;
     border: black 1px dotted;
-}
-
-body {
-    font-family: 'Inter', agenda, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 'helvetica neue', helvetica, arial, sans-serif;
-    line-height: 1em;
 }
 
 .panel {
@@ -59,19 +38,6 @@ h1, h2, h3, h4, h5, h6 {
 h1 {
 	font-size: 3rem;
 	font-weight: 700;
-}
-
-span.noBold {
-    font-weight: 100;
-}
-
-#title h1 sup {
-    border: 1px solid rgba(0,0,0,0.25);
-    font-size: 0.75rem;
-    vertical-align: top;
-    padding: 0.2em;
-    font-weight: 100;
-    line-height: 3.25em;
 }
 
 h2 {

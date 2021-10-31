@@ -58,10 +58,8 @@ export default function Station(props) {
                             padding: 0;
                             text-align: center;
                         `}
-                        className="classic-bikes"
                     >
                         <h4
-                            className="bikes-remaining"
                             css={css`
                                 font-size: ${fontSize[6]};
                             `}
@@ -85,10 +83,8 @@ export default function Station(props) {
                             padding: 0;
                             text-align: center;
                         `}
-                        className="ebikes"
                     >
                         <h4 
-                            className="ebikes-remaining"
                             css={css`
                                 font-size: ${fontSize[6]};
                             `}
@@ -112,10 +108,8 @@ export default function Station(props) {
                             padding: 0;
                             text-align: center;
                         `}
-                        className="docks"
                     >
-                        <h4 
-                            className="docks-remaining"
+                        <h4
                             css={css`
                                 font-size: ${fontSize[6]};
                             `}

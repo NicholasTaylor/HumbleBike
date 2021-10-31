@@ -22,7 +22,9 @@ class App extends React.Component {
     return (
       <div>
         <CustomFonts />
-        <div id="container">
+        <div 
+          id="container"
+        >
           <div
             id="content"
             className={this.props.search + ' ' + this.props.filterElec + ' ' + this.props.filterElecFree + ' ' + this.props.filterDock}

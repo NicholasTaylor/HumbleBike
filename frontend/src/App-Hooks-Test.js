@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import GetStation from './components/GetStation';
 import UpdateDistance from './components/UpdateDistance';
 import Station from './components/Station';
@@ -6,14 +6,17 @@ import SortStations from './components/SortStations';
 import Logo from './components/Logo';
 import CustomFonts from './components/Fonts';
 import Haversine from './components/Haversine';
+import Options from './components/Options';
+import { fontFamily, inter, fontSize } from './constants/style';
+import { css, jsx } from '@emotion/react';
+/** @jsxRuntime classic */
+/** @jsx jsx */;
 
 export default function AppHooksTest() {
   const [location, setLocation] = useState({});
   const [error, setError] = useState(null);
   const [stations, setStations] = useState([]);
   const [timedRefresh, setTimedRefresh] = useState(0);
-
-
 
   useEffect(() => {
     const autoRefresh = setInterval(() => {
@@ -96,9 +99,22 @@ export default function AppHooksTest() {
   return (
     <div>
       <CustomFonts />
-      <div id="container">
+      <div
+        css={css`
+          font-family: ${inter}, ${fontFamily};
+          line-height: ${fontSize[2]};
+          width: 100vw;
+          position: relative;
+        `}
+      >
+        <Options />
         <div
-          id="content"
+          css={css`
+            position: absolute;
+            width: 90vw;
+            left: 50vw;
+            transform: translateX(-50%);
+          `}
         >
           <Logo />
           { stations.map(station => <Station key={station.station_id} data={station} />) }
