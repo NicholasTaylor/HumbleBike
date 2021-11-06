@@ -18,7 +18,27 @@ export default function Options () {
         >
             <div
                 css={css`
-                    margin: ${space[4]} ${space[0]} ${space[0]} ${space[0]};
+                    margin: ${space[4]} 0 0 0;
+                    input[type = "checkbox"] 
+                            {
+                                -ms-transform: scale(2); /* IE */
+                                -moz-transform: scale(2);
+                                -webkit-transform: scale(2);
+                                -o-transform: scale(2);
+                                transform: scale(2);
+                                padding: 10px;
+                            }
+                    > div {
+                        font-size: ${fontSize[3]};
+                        line-height: ${fontSize[3]};
+                        font-weight: ${fontWeight['bold']};
+                        text-align: left;
+                        margin: ${space[5 ]} ${space[5]} ${space[6]} ${space[5]};
+                    }
+
+                    > div > span {
+                        margin: 0 1em 0 0;
+                    }
                 `}
             >
                 <h1
@@ -30,121 +50,34 @@ export default function Options () {
                 >
                     Options
                 </h1>
-                <div
-                    css={css`
-                        input[type = "checkbox"] 
-                            {
-                                -ms-transform: scale(2); /* IE */
-                                -moz-transform: scale(2);
-                                -webkit-transform: scale(2);
-                                -o-transform: scale(2);
-                                transform: scale(2);
-                                padding: 10px;
-                            }
-                    `}
-                >
-                    <span
-                        css={css`
-                            font-weight: ${fontWeight['bold']};
-                            margin: 0.5em;
-                            display: inline-block;
-                        `}
-                    >
-                        <span
-                            css={css`
-                                margin: 0 1em 0 0;
-                            `}
-                        >
-                            Electric Only?
-                        </span>
-                        <input
-                            type="checkbox"
-                            label="Electric Only?"
-                        />
+                <div>
+                    <span>
+                        Electric Only?
                     </span>
-                    <span
-                        css={css`
-                            font-weight: ${fontWeight['bold']};
-                            margin: 0.5em;
-                            display: inline-block;
-                        `}
-                    >
-                        <span
-                            css={css`
-                                margin: 0 1em 0 0;
-                            `}
-                        >
-                            Docks Only?
-                        </span>
-                        <input
-                            type="checkbox"
-                            label="Docks Only?"
-                        />
+                    <input
+                        type="checkbox"
+                        label="Electric Only?"
+                    />
+                </div>
+                <div>
+                    <span>
+                        Docks Only?
                     </span>
-                    </div>
-                    <div
-                        css={css`
-                            margin: 1em 0;
-                            padding: 1em 0;
-                            border: white 1px dotted;
-                        `}
-                    >
-                    <div
-                        css={css`
-                            input[type = "checkbox"] 
-                                {
-                                    -ms-transform: scale(2); /* IE */
-                                    -moz-transform: scale(2);
-                                    -webkit-transform: scale(2);
-                                    -o-transform: scale(2);
-                                    transform: scale(2);
-                                    padding: 10px;
-                                }
-                        `}
-                    >
-                        <span
-                            css={css`
-                                font-weight: ${fontWeight['bold']};
-                                margin: 0.5em;
-                                display: inline-block;
-                            `}
-                        >
-                        <span
-                            css={css`
-                                margin: 0 1em 0 0;
-                            `}
-                        >
-                            Electric with No Classic?
-                        </span>
-                        <input
-                            type="checkbox"
-                            label="Electric with No Classic?"
-                        />
-                        </span>
-                    </div>
-                    <div
-                        css={css`
-                            input[type = "checkbox"] 
-                                {
-                                    -ms-transform: scale(2); /* IE */
-                                    -moz-transform: scale(2);
-                                    -webkit-transform: scale(2);
-                                    -o-transform: scale(2);
-                                    transform: scale(2);
-                                    padding: 10px;
-                                }
-                        `}
-                    >
-                        <span
-                            css={css`
-                                font-weight: ${fontWeight['bold']};
-                                margin: 0.5em;
-                                display: inline-block;
-                            `}
-                        >
-                            <i>(CitiBike waives e-bike charges if there are only e-bikes at a station at the start of the ride)</i>
-                        </span>
-                    </div>
+                    <input
+                        type="checkbox"
+                        label="Docks Only?"
+                    />
+                </div>
+                <div>
+                    <span>
+                        Electric with No Classic?
+                    </span>
+                    <input
+                        type="checkbox"
+                        label="Electric with No Classic?"
+                    />
+                    
+                    {/* Convert this to a help icon item - <i>(CitiBike waives e-bike charges if there are only e-bikes at a station at the start of the ride)</i> */}
                 </div>
             </div>
         </div>
