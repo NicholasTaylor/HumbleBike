@@ -190,8 +190,9 @@ export default function AppHooksTest() {
           >
             <div
               css={css`
-                font-size: ${fontSize[1]};
-                line-height: ${fontSize[1]};
+                font-size: ${fontSize[2]};
+                line-height: ${fontSize[2]};
+                margin: 0 0 ${space[3]} 0;
               `}
             >
               Last updated: <strong>{lastUpdated}</strong>
@@ -216,19 +217,18 @@ export default function AppHooksTest() {
                     display: inline-block;
                     border: #808080 1px solid;
                     padding: ${space[1]} ${space[2]};
-                    border-radius: ${space[2]};
+                    border-radius: ${space[4]};
                     background-color: transparent;
                   `}
                   onClick={handleClick}
                 >
-                  Refresh&nbsp;
                   <svg 
                     xmlns="http://www.w3.org/2000/svg" 
                     viewBox="0 0 20 20" 
                     fill="black" 
                     css={css`
                       height: auto;
-                      width: 1em;
+                      width: 4em;
                     `}
                   >
                     <path 
@@ -250,7 +250,7 @@ export default function AppHooksTest() {
                 <input
                   type="text"
                   label="search"
-                  placeholder="Search for stations"
+                  placeholder="Search"
                   value={searchQuery}
                   onChange={(e) => searchStations(e)}
                   css={css`
@@ -258,9 +258,14 @@ export default function AppHooksTest() {
                     width: 100%;
                     font-family: ${inter}, ${fontFamily};
                     font-weight: ${fontWeight['bold']};
-                    font-size: ${fontSize[1]};
-                    padding: 0 ${space[2]};
-                    line-height: ${fontSize[2]};
+                    font-size: ${fontSize[4]};
+                    padding: 0 ${space[4]};
+                    line-height: ${fontSize[7]};
+                    border-radius: ${space[4]};
+                    border: 1px solid #808080;
+                    position: relative;
+                    top: 50%;
+                    transform: translateY(-50%);
                   `}
                 />
               </div>
@@ -279,20 +284,8 @@ export default function AppHooksTest() {
                                   -o-transform: scale(2);
                                   transform: scale(2);
                                   padding: 10px;
+                                  margin: 0 0 0 1em;
                               }
-                      > div {
-                        font-weight: ${fontWeight['bold']};
-                        text-align: left;
-                        margin: ${space[5]} 0; 
-                      }
-
-                      > div:first-of-type {
-                        margin: ${space[4]} 0 ${space[5]} 0;
-                      }
-
-                      > div > span {
-                          margin: 0 1em 0 0;
-                      }
                   `}
               >
                   <h1
@@ -304,40 +297,51 @@ export default function AppHooksTest() {
                   >
                       Options
                   </h1>
-                  <div>
-                      <span>
-                          Electric Only?
-                      </span>
-                      <input
-                          type="checkbox"
-                          label="Electric Only?"
-                          onChange={(e) => toggleElec(e)}
-                          checked={filterElec ? 'checked' : ''}
-                      />
-                  </div>
-                  <div>
-                      <span>
-                          Docks Only?
-                      </span>
-                      <input
-                          type="checkbox"
-                          label="Docks Only?"
-                          onChange={(e) => toggleDock(e)}
-                          checked={filterDock ? 'checked' : ''}
-                      />
-                  </div>
-                  <div>
-                      <span>
-                          Electric with No Classic?
-                      </span>
-                      <input
-                          type="checkbox"
-                          label="Electric with No Classic?"
-                          onChange={(e) => toggleElecFree(e)}
-                          checked={filterElecFree ? 'checked' : ''}
-                      />
-                      
-                      {/* Convert this to a help icon item - <i>(CitiBike waives e-bike charges if there are only e-bikes at a station at the start of the ride)</i> */}
+                  <div
+                    css={css`
+                      > div {
+                        font-weight: ${fontWeight['bold']};
+                        text-align: left;
+                        margin: ${space[5]} 0; 
+                      }
+
+                      > div:first-of-type {
+                        margin: ${space[4]} 0 ${space[5]} 0;
+                      }
+
+                      visibility: hidden;
+                      height: 0;
+                    `}
+                  >
+                    <div>
+                        Electric Only?
+                        <input
+                            type="checkbox"
+                            label="Electric Only?"
+                            onChange={(e) => toggleElec(e)}
+                            checked={filterElec ? 'checked' : ''}
+                        />
+                    </div>
+                    <div>
+                        Docks Only?
+                        <input
+                            type="checkbox"
+                            label="Docks Only?"
+                            onChange={(e) => toggleDock(e)}
+                            checked={filterDock ? 'checked' : ''}
+                        />
+                    </div>
+                    <div>
+                        Electric with No Classic?
+                        <input
+                            type="checkbox"
+                            label="Electric with No Classic?"
+                            onChange={(e) => toggleElecFree(e)}
+                            checked={filterElecFree ? 'checked' : ''}
+                        />
+                        
+                        {/* Convert this to a help icon item - <i>(CitiBike waives e-bike charges if there are only e-bikes at a station at the start of the ride)</i> */}
+                    </div>
                   </div>
               </div>
           </div>
