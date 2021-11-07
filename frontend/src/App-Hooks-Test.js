@@ -20,6 +20,9 @@ export default function AppHooksTest() {
   const [manualRefresh, setManualRefresh] = useState(0);
   const [lastUpdated, setLastUpdated] = useState(new Date().toLocaleString());
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterElec, setFilterElec] = useState(false); 
+	const [filterElecFree, setFilterElecFree] = useState(false);
+	const [filterDock, setFilterDock] = useState(false);
 
   const endpointInfo = 'https://gbfs.citibikenyc.com/gbfs/en/station_information.json';
   const endpointStatus = 'https://gbfs.citibikenyc.com/gbfs/en/station_status.json';
@@ -68,6 +71,18 @@ export default function AppHooksTest() {
     return(stationInfo);
   },[stationInfo]);
 
+  const toggleElec = () => {
+    setFilterElec(!(filterElec));
+  }
+
+  const toggleDock = () => {
+    setFilterDock(!(filterDock));
+  }
+
+  const toggleElecFree = () => {
+    setFilterElecFree(!(filterElecFree));
+  }
+
   useEffect(()=> {
     const geo = navigator.geolocation;
 
@@ -88,7 +103,6 @@ export default function AppHooksTest() {
     }
 
     const update = geo.watchPosition(onLocationChange, onError);
-
     setStations(s => updateStationDist({...s}));
 
     return() => {
@@ -252,7 +266,94 @@ export default function AppHooksTest() {
               </div>
             </div>
           </div>
-          { stations.map((station) => <Station key={station.station_id} data={station} />) }
+          <div
+          >
+              <div
+                  css={css`
+                      margin: ${space[4]} 0 0 0;
+                      input[type = "checkbox"] 
+                              {
+                                  -ms-transform: scale(2); /* IE */
+                                  -moz-transform: scale(2);
+                                  -webkit-transform: scale(2);
+                                  -o-transform: scale(2);
+                                  transform: scale(2);
+                                  padding: 10px;
+                              }
+                      > div {
+                        font-weight: ${fontWeight['bold']};
+                        text-align: left;
+                        margin: ${space[5]} 0; 
+                      }
+
+                      > div:first-of-type {
+                        margin: ${space[4]} 0 ${space[5]} 0;
+                      }
+
+                      > div > span {
+                          margin: 0 1em 0 0;
+                      }
+                  `}
+              >
+                  <h1
+                      css={css`
+                          font-size: ${fontSize[4]};
+                          line-height: ${fontSize[4]};
+                          font-weight: ${fontWeight['bold']};
+                      `}
+                  >
+                      Options
+                  </h1>
+                  <div>
+                      <span>
+                          Electric Only?
+                      </span>
+                      <input
+                          type="checkbox"
+                          label="Electric Only?"
+                          onChange={(e) => toggleElec(e)}
+                          checked={filterElec ? 'checked' : ''}
+                      />
+                  </div>
+                  <div>
+                      <span>
+                          Docks Only?
+                      </span>
+                      <input
+                          type="checkbox"
+                          label="Docks Only?"
+                          onChange={(e) => toggleDock(e)}
+                          checked={filterDock ? 'checked' : ''}
+                      />
+                  </div>
+                  <div>
+                      <span>
+                          Electric with No Classic?
+                      </span>
+                      <input
+                          type="checkbox"
+                          label="Electric with No Classic?"
+                          onChange={(e) => toggleElecFree(e)}
+                          checked={filterElecFree ? 'checked' : ''}
+                      />
+                      
+                      {/* Convert this to a help icon item - <i>(CitiBike waives e-bike charges if there are only e-bikes at a station at the start of the ride)</i> */}
+                  </div>
+              </div>
+          </div>
+          <div
+            css={css`
+              section.stationOff, .filterElecOn section.elecOff, .filterElecFreeOn section.elecFreeOff, .filterElecDockOn section.dockOff {
+                  display: none;
+              }
+            `}
+          >
+            <div
+              className={(filterElec ? 'filterElecOn' : 'filterElecOff') +' ' +(filterElecFree ? 'filterElecFreeOn' : 'filterElecFreeOff') +' ' +(filterDock ? 'filterDockOn' : 'filterDockOff')}
+            >
+              { stations.map((station) => <Station key={station.station_id} data={station} />) }
+            </div>
+          </div>
         </div>
       </div>
     </div>
