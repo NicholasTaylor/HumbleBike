@@ -23,7 +23,13 @@ export default function Station(props) {
         return output;
     }
     return(
-        <div>
+        <div
+            css={css`
+                section.stationOff {
+                    display: none;
+                }
+            `}
+        >
             <section
                 className={(station.isVisible ? 'stationOn' : 'stationOff') + ' ' + (station.electric > 0 ? 'elecOn' : 'elecOff') + ' ' + (station.docks > 0 ? 'dockOn' : 'dockOff') + ' ' + (station.electric > 0 && station.classic === 0 ? 'elecFreeOn' : 'elecFreeOff')}
             >

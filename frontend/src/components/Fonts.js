@@ -19,7 +19,7 @@ function CustomFonts(){
 			<link 
 				rel="preconnect" 
 				href="https://fonts.gstatic.com" 
-				crossorigin
+				crossOrigin
 			/>
 			<link 
 				href={GOOGLE_FONTS}
