@@ -1,5 +1,5 @@
 fe-setup:
-	docker-compose up -d --build && sudo chmod -R a+rw .
+	docker-compose build --no-cache
 fe-dev:
 	docker-compose up
 fe-prod:

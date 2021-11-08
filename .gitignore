@@ -14,8 +14,10 @@ frontend/build
 # fonts
 frontend/src/constants/fonts.js
 
+# design files
+frontend/src/design
+
 # misc
-frontend/.DS_Store
 frontend/.env.local
 frontend/.env.development.local
 frontend/.env.test.local
@@ -25,3 +27,7 @@ frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
 debug.log
+.vscode/
+
+.DS_Store
+*.DS_Store
