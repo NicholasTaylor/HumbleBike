@@ -23,6 +23,7 @@ export default function AppHooksTest() {
   const [filterElec, setFilterElec] = useState(false); 
 	const [filterElecFree, setFilterElecFree] = useState(false);
 	const [filterDock, setFilterDock] = useState(false);
+	const [options, setOptions] = useState(false);
 
   const endpointInfo = 'https://gbfs.citibikenyc.com/gbfs/en/station_information.json';
   const endpointStatus = 'https://gbfs.citibikenyc.com/gbfs/en/station_status.json';
@@ -70,6 +71,28 @@ export default function AppHooksTest() {
     }
     return(stationInfo);
   },[stationInfo]);
+
+  const toggleOptions = () => {
+    const animateOptions = new Promise((resolve, reject) => {
+      console.log(`options: ${options}`);
+      const icon = document.getElementById('options-icon');
+      const panel = document.getElementById('options-panel');
+      if (options){
+        icon.classList.remove('iconOn');
+        panel.classList.remove('panelOn');
+        icon.classList.add('iconOff');
+        panel.classList.add('panelOff');
+      } else {
+        icon.classList.remove('iconOff');
+        panel.classList.remove('panelOff');
+        icon.classList.add('iconOn');
+        panel.classList.add('panelOn');
+      }
+      resolve(true);
+    });
+    animateOptions
+      .then(setOptions(!(options)));
+  }
 
   const toggleElec = () => {
     setFilterElec(!(filterElec));
@@ -274,75 +297,128 @@ export default function AppHooksTest() {
           <div
           >
               <div
-                  css={css`
-                      margin: ${space[4]} 0 0 0;
-                      input[type = "checkbox"] 
-                              {
-                                  -ms-transform: scale(2); /* IE */
-                                  -moz-transform: scale(2);
-                                  -webkit-transform: scale(2);
-                                  -o-transform: scale(2);
-                                  transform: scale(2);
-                                  padding: 10px;
-                                  margin: 0 0 0 1em;
-                              }
-                  `}
+                css={css`
+                  margin: ${space[4]} 0 0 0;
+                  .iconOn {
+                    transform: rotate(405deg);
+                  }
+                  .iconOff {
+                    transform: rotate(0deg);
+                  }
+                  .panelOn {
+                    visibility: visible;
+                    opacity: 1;
+                    max-height: 101%;
+                  }
+                  .panelOff {
+                    visibility: hidden;
+                    opacity: 0;
+                    max-height: 0;
+                  }
+                  input[type = "checkbox"] 
+                    {
+                      -ms-transform: scale(2); /* IE */
+                      -moz-transform: scale(2);
+                      -webkit-transform: scale(2);
+                      -o-transform: scale(2);
+                      transform: scale(2);
+                      padding: 10px;
+                      margin: 0 0 0 1em;
+                    }
+                `}
               >
-                  <h1
-                      css={css`
-                          font-size: ${fontSize[4]};
-                          line-height: ${fontSize[4]};
-                          font-weight: ${fontWeight['bold']};
-                      `}
-                  >
-                      Options
-                  </h1>
-                  <div
+                <div
                     css={css`
-                      > div {
-                        font-weight: ${fontWeight['bold']};
-                        text-align: left;
-                        margin: ${space[5]} 0; 
-                      }
-
-                      > div:first-of-type {
-                        margin: ${space[4]} 0 ${space[5]} 0;
-                      }
-
-                      visibility: hidden;
-                      height: 0;
+                      font-size: ${fontSize[4]};
+                      line-height: ${fontSize[4]};
+                      font-weight: ${fontWeight['bold']};
                     `}
-                  >
-                    <div>
-                        Electric Only?
-                        <input
-                            type="checkbox"
-                            label="Electric Only?"
-                            onChange={(e) => toggleElec(e)}
-                            checked={filterElec ? 'checked' : ''}
-                        />
-                    </div>
-                    <div>
-                        Docks Only?
-                        <input
-                            type="checkbox"
-                            label="Docks Only?"
-                            onChange={(e) => toggleDock(e)}
-                            checked={filterDock ? 'checked' : ''}
-                        />
-                    </div>
-                    <div>
-                        Electric with No Classic?
-                        <input
-                            type="checkbox"
-                            label="Electric with No Classic?"
-                            onChange={(e) => toggleElecFree(e)}
-                            checked={filterElecFree ? 'checked' : ''}
-                        />
-                        
-                        {/* Convert this to a help icon item - <i>(CitiBike waives e-bike charges if there are only e-bikes at a station at the start of the ride)</i> */}
-                    </div>
+                >
+                    Options
+                    <svg 
+                      id="options-icon"
+                      version="1.1"
+                      x="0px" 
+                      y="0px"
+                      viewBox="0 0 1000 1000"
+                      css={css`
+                        enable-background:new 0 0 1000 1000;
+                        margin: 0 ${space[3]};
+                        width: ${fontSize[2]};
+                        height: auto;
+                        transform: rotate(0deg);
+                        transition: 0.5s ease-in-out;
+                        line {
+                          fill:none;
+                          stroke:#000000;
+                          stroke-width:64;
+                          stroke-miterlimit:10;
+                        }
+                      `}
+                      onClick={(e) => toggleOptions(e)}
+                      >
+                      <line 
+                        x1="-207.13" 
+                        y1="499.81" 
+                        x2="1207.08" 
+                        y2="499.81"
+                      />
+                      <line 
+                        x1="499.55" 
+                        y1="-207.04" 
+                        x2="499.55" 
+                        y2="1207.17"
+                      />
+                    </svg>
+                </div>
+                <div
+                  id="options-panel"
+                  css={css`
+                    > div {
+                      font-weight: ${fontWeight['bold']};
+                      text-align: left;
+                      margin: ${space[5]} 0; 
+                    }
+
+                    > div:first-of-type {
+                      margin: ${space[4]} 0 ${space[5]} 0;
+                    }
+                    visibility: hidden;
+                    max-height: 0;
+                    opacity: 0;
+                    transition: 0.5s ease-in-out;
+                  `}
+                >
+                  <div>
+                      Electric Only?
+                      <input
+                          type="checkbox"
+                          label="Electric Only?"
+                          onChange={(e) => toggleElec(e)}
+                          checked={filterElec ? 'checked' : ''}
+                      />
                   </div>
+                  <div>
+                      Docks Only?
+                      <input
+                          type="checkbox"
+                          label="Docks Only?"
+                          onChange={(e) => toggleDock(e)}
+                          checked={filterDock ? 'checked' : ''}
+                      />
+                  </div>
+                  <div>
+                      Electric with No Classic?
+                      <input
+                          type="checkbox"
+                          label="Electric with No Classic?"
+                          onChange={(e) => toggleElecFree(e)}
+                          checked={filterElecFree ? 'checked' : ''}
+                      />
+                      
+                      {/* Convert this to a help icon item - <i>(CitiBike waives e-bike charges if there are only e-bikes at a station at the start of the ride)</i> */}
+                  </div>
+                </div>
               </div>
           </div>
           <div

@@ -14,6 +14,9 @@ frontend/build
 # fonts
 frontend/src/constants/fonts.js
 
+# design files
+frontend/src/design
+
 # misc
 frontend/.DS_Store
 frontend/.env.local
