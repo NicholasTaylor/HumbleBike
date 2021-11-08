@@ -18,7 +18,6 @@ frontend/src/constants/fonts.js
 frontend/src/design
 
 # misc
-frontend/.DS_Store
 frontend/.env.local
 frontend/.env.development.local
 frontend/.env.test.local
@@ -29,3 +28,6 @@ frontend/yarn-debug.log*
 frontend/yarn-error.log*
 debug.log
 .vscode/
+
+.DS_Store
+*.DS_Store

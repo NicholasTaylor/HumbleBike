@@ -1,5 +1,5 @@
 fe-setup:
-	docker-compose up -d --build
+	docker-compose build --no-cache
 fe-dev:
 	docker-compose up
 fe-prod:

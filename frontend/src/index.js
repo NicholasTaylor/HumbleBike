@@ -1,15 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './bootstrap.min.css';
-import './index.css';
-import AppHooksTest from './App-Hooks-Test';
-import store from './store/index.js'
-import { Provider } from 'react-redux';
+import App from './App';
 
 ReactDOM.render(
-	<Provider
-		store={store}
-	>
-		<AppHooksTest />
-	</Provider>,
-	document.getElementById('root'));
+	<App />,
+	document.getElementById('root')
+);

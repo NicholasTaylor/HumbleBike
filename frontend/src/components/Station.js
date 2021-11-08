@@ -31,6 +31,22 @@ export default function Station(props) {
                     border-top: 1px solid rgba(0,0,0,0.25);
                     margin: 1em 0;
                     padding: 1em 0;
+                    div {
+                        margin: 0;
+                        width: 29vw;
+                        display: inline-block;
+                        padding: 0;
+                        text-align: center;
+                        h4 {
+                            font-size: ${fontSize[6]};
+                            font-weight: ${fontWeight['bold']};
+                        }
+                        h5 {
+                            font-size: ${fontSize[2]};
+                            font-weight: ${fontWeight['regular']};
+                        }
+                    }
+
                 `}
             >
                 <h3
@@ -49,78 +65,27 @@ export default function Station(props) {
                 >
                     {distInfo}
                 </h4>
-                <div 
-                    css={css`
-                        margin: 0;
-                        width: 29vw;
-                        display: inline-block;
-                        padding: 0;
-                        text-align: center;
-                    `}
-                >
-                    <h4
-                        css={css`
-                            font-size: ${fontSize[6]};
-                        `}
-                    >
+                <div>
+                    <h4>
                         {station.classic}
                     </h4>
-                    <h5 
-                        css={css`
-                            font-weight: ${fontWeight['light']};
-                            font-size: ${fontSize[2]};
-                        `}
-                    >
+                    <h5>
                         Classic
                     </h5>
                 </div>
-                <div  
-                    css={css`
-                        margin: 0;
-                        width: 29vw;
-                        display: inline-block;
-                        padding: 0;
-                        text-align: center;
-                    `}
-                >
-                    <h4 
-                        css={css`
-                            font-size: ${fontSize[6]};
-                        `}
-                    >
+                <div>
+                    <h4>
                         {station.electric}
                     </h4>
-                    <h5 
-                        css={css`
-                            font-weight: ${fontWeight['light']};
-                            font-size: ${fontSize[2]};
-                        `}
-                    >
+                    <h5>
                         Electric
                     </h5>
                 </div>
-                <div  
-                    css={css`
-                        margin: 0;
-                        width: 29vw;
-                        display: inline-block;
-                        padding: 0;
-                        text-align: center;
-                    `}
-                >
-                    <h4
-                        css={css`
-                            font-size: ${fontSize[6]};
-                        `}
-                    >
+                <div>
+                    <h4>
                         {station.docks}
                     </h4>
-                    <h5 
-                        css={css`
-                            font-weight: ${fontWeight['light']};
-                            font-size: ${fontSize[2]};
-                        `}
-                    >
+                    <h5>
                         Docks
                     </h5>
                 </div>
