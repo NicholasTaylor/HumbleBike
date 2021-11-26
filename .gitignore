@@ -17,6 +17,9 @@ frontend/src/constants/fonts.js
 # design files
 frontend/src/design
 
+# outputs
+datapull/*.npz
+
 # misc
 frontend/.env.local
 frontend/.env.development.local
