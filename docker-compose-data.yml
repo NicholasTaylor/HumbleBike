@@ -5,4 +5,4 @@ services:
         build: ./datapull
         volumes: 
             - './datapull:/opt/datapull'
-        command: python app.py
+        command: python app-protobuf-test.py

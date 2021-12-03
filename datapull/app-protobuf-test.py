@@ -1,5 +1,4 @@
-from numpy import array, savez_compressed, load
-import json
+import json, records_pb2, google, inspect
 
 def sort_key(e):
         return e[0]
@@ -8,6 +7,34 @@ def sort_station_id(e):
     for ele in e:
         if ele[0] == 'station_id':
             return int(ele[1])
+
+def gen_sub_attr(new_inst, attr):
+    keys_list = new_inst.DESCRIPTOR.fields_by_name.keys()
+    for sub_attr in attr:
+        if sub_attr not in keys_list:
+            continue
+        else:
+            setattr(new_inst, sub_attr, attr[sub_attr])
+    return new_inst
+
+def gen_station(new_inst, station):
+    keys_list = new_inst.DESCRIPTOR.fields_by_name.keys()
+    for attr in station:
+        if attr not in keys_list:
+            continue
+        else:
+            pass
+        #type_test = type(station[attr]).__name__
+        attr_value = station[attr]
+        if attr == 'eightd_active_station_services' or attr == 'eightd_station_services':
+            for service in attr_value:
+                new_inst.attr = gen_sub_attr(getattr(getattr(new_inst, attr), 'add')(), service)
+        elif attr == 'rental_methods':
+            getattr(getattr(new_inst, attr), 'extend')(attr_value)
+        elif attr == 'rental_uris' or attr == 'valet':
+            pass
+        
+        #new_inst.attr = station[attr]
 
 def get_json(info_url, status_url):
     import requests
@@ -56,5 +83,18 @@ def testing_view(filename):
 #savez_compressed('data.npz', data)
 #print(testing_view('data.npz'))
 
-with open('output.json','w+') as f:
+"""with open('output.json','w+') as f:
     f.write(json.dumps(testing_view('data.npz').tolist()))
+"""
+
+attr_values = {'id': 'testing123'}
+
+def attr_method(new_inst, attr):
+    for i in attr:
+        setattr(new_inst, i, attr[i])
+    return new_inst
+
+test = records_pb2.Station()
+indirect = 'rental_methods'
+getattr(getattr(test, indirect), 'extend')(['TESTTESTTEST'])
+print(test.rental_methods)
