@@ -20,7 +20,7 @@ frontend/src/constants/fonts.js
 frontend/src/design
 
 # outputs
-datapull/*.npz
+datapull/*.tar.gz
 datapull/records_pb2.py
 
 # misc

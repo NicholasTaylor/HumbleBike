@@ -1,18 +1,56 @@
-from numpy import array, savez_compressed, load
-import json
+import json, records_pb2, gzip
+from google.protobuf.json_format import MessageToJson
 
-def sort_key(e):
-        return e[0]
+STATION_INFORMATION = 'https://gbfs.citibikenyc.com/gbfs/en/station_information.json'
+STATION_STATUS = 'https://gbfs.citibikenyc.com/gbfs/en/station_status.json'
+FILE_STEM = 'records'
+FILE_PREFIX = FILE_STEM + '_'
+FILE_EXT = '.tar.gz'
+FILE_ZERO = FILE_PREFIX + '0000' + FILE_EXT
+FILE_SIZE_LIMIT = 1073741824
 
 def sort_station_id(e):
-    for ele in e:
-        if ele[0] == 'station_id':
-            return int(ele[1])
+    return int(e['station_id'])
+
+def gen_sub_attr(inst, attr):
+    keys_list = inst.DESCRIPTOR.fields_by_name.keys()
+    for sub_attr in attr:
+        if sub_attr not in keys_list:
+            continue
+        else:
+            setattr(inst, sub_attr, attr[sub_attr])
+    return inst
+
+def gen_station(inst, station):
+    keys_list = inst.DESCRIPTOR.fields_by_name.keys()
+    for attr in station:
+        if attr not in keys_list:
+            continue
+        else:
+            pass
+        attr_value = station[attr]
+        type_test = type(attr_value).__name__
+        attr_type_test = type(getattr(inst,attr)).__name__
+        try:
+            value_dict_test = True if type(attr_value[0]).__name__ == 'dict' else False
+        except:
+            value_dict_test = False
+        if type_test == 'list' and value_dict_test:
+            attr_arr = []
+            for service in attr_value:
+                gen_sub_attr(getattr(getattr(inst, attr),'add')(), service)
+            getattr(getattr(inst, attr), 'extend')(attr_arr)
+        elif type_test == 'list':
+            getattr(getattr(inst, attr), 'extend')(attr_value)
+        elif type_test == 'dict':
+            gen_sub_attr(getattr(inst, attr), attr_value)
+        elif attr_type_test == 'Timestamp':
+            getattr(getattr(inst, attr), 'FromSeconds')(int(attr_value))
+        else:
+            setattr(inst, attr, attr_value)
 
 def get_json(info_url, status_url):
     import requests
-    from datetime import datetime
-
     station_map = {}
     station_arr = []
     r_info = requests.get(info_url).json()['data']['stations']
@@ -23,38 +61,69 @@ def get_json(info_url, status_url):
     for station in r_status:
         full_station = station_map[station['station_id']]
         full_station.update(station)
-        full_station_arr = list(full_station.items())
-        full_station_arr.sort(key=sort_key)
-        station_arr.append(full_station_arr)
+        station_arr.append(full_station)
     station_arr.sort(key=sort_station_id)
-    current = datetime.now()
-    date = current.strftime('%Y-%m-%d %H:%M:%S')
-    month = current.strftime('%m')
-    day = current.strftime('%d')
-    week = current.strftime('%U')
-    hour = current.strftime('%H')
-    minute = current.strftime('%M')
-    full_record = {
-        'date': date,
-        'month': month,
-        'day': day,
-        'weeknum': week,
-        'hour': hour,
-        'minute': minute,
-        'stations': station_arr
-    }
-    full_record_arr = list(full_record.items())
-    return full_record_arr
+    return station_arr
 
-def testing_view(filename):
-    dict_data = load(filename, allow_pickle=True)
-    data = dict_data['arr_0']
-    return data
+def gen_stations(inst, station_arr):
+    for station in station_arr:
+        gen_station(inst.station.add(),station)
+    return inst
 
-#stations = get_json('https://gbfs.citibikenyc.com/gbfs/en/station_information.json','https://gbfs.citibikenyc.com/gbfs/en/station_status.json')
-#data = array(stations, dtype=object)
-#savez_compressed('data.npz', data)
-#print(testing_view('data.npz'))
+def gen_record(record):
+    from datetime import datetime
+    import time
+    json_out = get_json(STATION_INFORMATION,STATION_STATUS)
+    gen_stations(record.stations,json_out)
+    record.date.FromSeconds(int(time.mktime(datetime.now().timetuple())))
 
-with open('output.json','w+') as f:
-    f.write(json.dumps(testing_view('data.npz').tolist()))
+def find_latest_file():
+    import os
+    counter = 0
+    found_file = False
+    need_new_file = False
+    filename = ''
+    while found_file == False:
+        fn_test = FILE_PREFIX + f'{counter:04}' + FILE_EXT
+        fn_exist = True if os.path.exists(fn_test) else False
+        fn_right_size = True if fn_exist and os.path.getsize(fn_test) < FILE_SIZE_LIMIT else False
+        if fn_exist == False:
+            filename = fn_test
+            need_new_file = True
+            found_file = True
+        elif fn_right_size == True:
+            filename = fn_test
+            need_new_file = False
+            found_file = True
+        else:
+            counter += 1
+    return filename, need_new_file
+
+def save_records(records, filename):
+    with gzip.open(filename, 'wb') as f:
+        f.write(records.SerializeToString())
+
+def add_record():
+    filename, need_new_file = find_latest_file()
+    records = records_pb2.Records()
+    if not(need_new_file):
+        with gzip.open(filename, 'rb') as f:
+            records.ParseFromString(f.read())
+    record = records.record.add()
+    gen_record(record)
+    return records, filename
+
+def read_record():
+    filename, need_new_file = find_latest_file()
+    records = records_pb2.Records()
+    with gzip.open(filename, 'rb') as f:
+        records.ParseFromString(f.read())
+    data_raw = MessageToJson(records)
+    data_json = json.loads(data_raw)
+    with open('test.json', 'w+') as f:
+        f.write(json.dumps(str(data_json['record'][0])))
+    return('Done')
+
+records, filename = add_record()
+save_records(records, filename)
+#print(read_record())
