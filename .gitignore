@@ -21,6 +21,7 @@ frontend/src/design
 
 # outputs
 datapull/*.tar.gz
+datapull/*.csv
 datapull/records_pb2.py
 
 # misc

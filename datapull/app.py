@@ -1,5 +1,5 @@
-import json, records_pb2, gzip
-from google.protobuf.json_format import MessageToJson
+import json, records_pb2, gzip, os
+from datetime import datetime
 
 STATION_INFORMATION = 'https://gbfs.citibikenyc.com/gbfs/en/station_information.json'
 STATION_STATUS = 'https://gbfs.citibikenyc.com/gbfs/en/station_status.json'
@@ -7,7 +7,12 @@ FILE_STEM = 'records'
 FILE_PREFIX = FILE_STEM + '_'
 FILE_EXT = '.tar.gz'
 FILE_ZERO = FILE_PREFIX + '0000' + FILE_EXT
-FILE_SIZE_LIMIT = 1073741824
+#FILE_SIZE_LIMIT = 1073741824
+FILE_SIZE_LIMIT = 2097152
+LOG_FILE = 'log.csv'
+LOG_FIELD_1 = 'time'
+LOG_FIELD_2 = 'duration'
+LOG_FIELD_3 = 'filesize'
 
 def sort_station_id(e):
     return int(e['station_id'])
@@ -71,14 +76,12 @@ def gen_stations(inst, station_arr):
     return inst
 
 def gen_record(record):
-    from datetime import datetime
     import time
     json_out = get_json(STATION_INFORMATION,STATION_STATUS)
     gen_stations(record.stations,json_out)
     record.date.FromSeconds(int(time.mktime(datetime.now().timetuple())))
 
 def find_latest_file():
-    import os
     counter = 0
     found_file = False
     need_new_file = False
@@ -114,6 +117,7 @@ def add_record():
     return records, filename
 
 def read_record():
+    from google.protobuf.json_format import MessageToJson
     filename, need_new_file = find_latest_file()
     records = records_pb2.Records()
     with gzip.open(filename, 'rb') as f:
@@ -124,6 +128,25 @@ def read_record():
         f.write(json.dumps(str(data_json['record'][0])))
     return('Done')
 
+def log_run(start_time, end_time, filename):
+    import csv
+    is_log = True if os.path.exists(LOG_FILE) else False
+    diff = end_time - start_time
+    duration = int(round((diff.seconds * 1000) + (diff.microseconds / 1000),0))
+    filesize = os.path.getsize(filename)
+    new_row = {LOG_FIELD_1: start_time, LOG_FIELD_2: duration, LOG_FIELD_3: filesize}
+    with open(LOG_FILE, 'a+') as f:
+        logwriter = csv.DictWriter(f, fieldnames=[LOG_FIELD_1, LOG_FIELD_2, LOG_FIELD_3])
+        if not(is_log):
+            logwriter.writeheader()
+        else:
+            pass
+        logwriter.writerow(new_row)
+    return new_row
+
+start_time = datetime.now()
 records, filename = add_record()
 save_records(records, filename)
+end_time = datetime.now()
+log_run(start_time, end_time, filename)
 #print(read_record())
