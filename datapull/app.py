@@ -1,14 +1,13 @@
-import json, records_pb2, gzip, os
+import json, records_pb2, os
 from datetime import datetime
 
 STATION_INFORMATION = 'https://gbfs.citibikenyc.com/gbfs/en/station_information.json'
 STATION_STATUS = 'https://gbfs.citibikenyc.com/gbfs/en/station_status.json'
 FILE_STEM = 'records'
 FILE_PREFIX = FILE_STEM + '_'
-FILE_EXT = '.tar.gz'
+FILE_EXT = '.bin'
 FILE_ZERO = FILE_PREFIX + '0000' + FILE_EXT
-#FILE_SIZE_LIMIT = 1073741824
-FILE_SIZE_LIMIT = 2097152
+FILE_SIZE_LIMIT = 536870912 # The number of bytes in 0.5GB. At this max, even if the script has to read a binary file close to this size, it can still run under 60 seconds. 
 LOG_FILE = 'log.csv'
 LOG_FIELD_1 = 'time'
 LOG_FIELD_2 = 'duration'
@@ -103,14 +102,14 @@ def find_latest_file():
     return filename, need_new_file
 
 def save_records(records, filename):
-    with gzip.open(filename, 'wb') as f:
+    with open(filename, 'wb') as f:
         f.write(records.SerializeToString())
 
 def add_record():
     filename, need_new_file = find_latest_file()
     records = records_pb2.Records()
     if not(need_new_file):
-        with gzip.open(filename, 'rb') as f:
+        with open(filename, 'rb') as f:
             records.ParseFromString(f.read())
     record = records.record.add()
     gen_record(record)
@@ -120,7 +119,7 @@ def read_record():
     from google.protobuf.json_format import MessageToJson
     filename, need_new_file = find_latest_file()
     records = records_pb2.Records()
-    with gzip.open(filename, 'rb') as f:
+    with open(filename, 'rb') as f:
         records.ParseFromString(f.read())
     data_raw = MessageToJson(records)
     data_json = json.loads(data_raw)
