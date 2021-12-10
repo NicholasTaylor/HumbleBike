@@ -1,0 +1,84 @@
+syntax = "proto3";
+package humblebike;
+import "google/protobuf/timestamp.proto";
+
+message Station {
+    optional int32 capacity = 1;
+    optional bool eightd_has_available_keys = 2;
+
+    message ActiveStationServices {
+        optional string id = 1;
+    }
+
+    repeated ActiveStationServices eightd_active_station_services = 3;
+    optional bool eightd_has_key_dispenser = 4;
+
+    message StationServices {
+        optional string name = 1;
+        optional string id = 2;
+        optional string description = 3;
+        optional string service_type = 4;
+        optional string schedule_description = 5;
+        optional string link_for_more_info = 6;
+        optional int32 off_dock_remaining_bike_capacity = 7;
+        optional string docks_availability = 8;
+        optional int32 off_dock_bikes_count = 9;
+        optional string bikes_availability = 10;
+    }
+    
+    repeated StationServices eightd_station_services = 5;
+    optional bool electric_bike_surcharge_waiver = 6;
+    optional string external_id = 7;
+    optional bool has_kiosk = 8;
+    optional int32 is_installed = 9;
+    optional int32 is_renting = 10;
+    optional int32 is_returning = 11;
+    optional google.protobuf.Timestamp last_reported = 12;
+    optional double lat = 13;
+    optional string legacy_id = 14;
+    optional double lon = 15;
+    optional string name = 16;
+    optional int32 num_bikes_available = 17;
+    optional int32 num_bikes_disabled = 18;
+    optional int32 num_docks_available = 19;
+    optional int32 num_docks_disabled = 20;
+    optional int32 num_ebikes_available = 21; 
+    optional string region_id = 22; 
+    repeated string rental_methods = 23; 
+
+    message RentalURIs {
+        optional string ios = 1;
+        optional string android = 2;
+    }
+
+    optional RentalURIs rental_uris = 24; 
+    optional string short_name = 25;  
+    optional string station_id = 26;  
+    optional string station_status = 27;  
+    optional string station_type = 28; 
+
+    message ValetInfo {
+        optional bool active = 1;
+        optional int32 off_dock_count = 2;
+        optional string station_id = 3;
+        optional int32 dock_blocked_count = 4;
+        optional string region = 5;
+        optional int32 off_dock_capacity = 6;
+        optional int32 valet_revision = 7;
+    }
+
+    optional ValetInfo valet = 29;  
+}
+
+message Stations {
+    repeated Station station = 1;
+}
+
+message Record {
+    optional google.protobuf.Timestamp date = 1;
+    optional Stations stations = 2;
+}
+
+message Records {
+    repeated Record record = 1;
+}

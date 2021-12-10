@@ -4,9 +4,11 @@
 frontend/node_modules
 frontend/.pnp
 frontend/.pnp.js
+datapull/__pycache__
 
 # testing
 frontend/coverage
+datapull/output.json
 
 # production
 frontend/build
@@ -16,6 +18,11 @@ frontend/src/constants/fonts.js
 
 # design files
 frontend/src/design
+
+# outputs
+datapull/*.tar.gz
+datapull/*.csv
+datapull/records_pb2.py
 
 # misc
 frontend/.env.local

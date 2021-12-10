@@ -1,7 +1,9 @@
-FROM python:3.9.6-alpine
+FROM python:slim
 
 RUN mkdir -p /opt/datapull
 WORKDIR /opt/datapull
 
 COPY requirements.txt /opt/datapull/
+RUN apt-get update
+RUN apt-get install -y make automake gcc g++ subversion python3-dev
 RUN pip install -r /opt/datapull/requirements.txt
