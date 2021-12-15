@@ -8,6 +8,7 @@ FILE_PREFIX = FILE_STEM + '_'
 FILE_EXT = '.tar.gz'
 FILE_ZERO = FILE_PREFIX + '0000' + FILE_EXT
 GIGABYTE = 1073741824
+FILE_LIMIT = 18874368
 LOG_FILE = 'log.csv'
 LOG_FIELD_1 = 'time'
 LOG_FIELD_2 = 'duration'
@@ -88,7 +89,7 @@ def find_latest_file():
     while found_file == False:
         fn_test = FILE_PREFIX + f'{counter:04}' + FILE_EXT
         fn_exist = True if os.path.exists(fn_test) else False
-        fn_right_size = True if fn_exist and os.path.getsize(fn_test) < GIGABYTE else False
+        fn_right_size = True if fn_exist and os.path.getsize(fn_test) < FILE_LIMIT else False
         if fn_exist == False:
             filename = fn_test
             need_new_file = True
