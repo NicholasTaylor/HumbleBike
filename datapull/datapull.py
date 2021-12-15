@@ -1,13 +1,13 @@
-import json, records_pb2, os
+import json, records_pb2, os, gzip
 from datetime import datetime
 
 STATION_INFORMATION = 'https://gbfs.citibikenyc.com/gbfs/en/station_information.json'
 STATION_STATUS = 'https://gbfs.citibikenyc.com/gbfs/en/station_status.json'
 FILE_STEM = 'records'
 FILE_PREFIX = FILE_STEM + '_'
-FILE_EXT = '.bin'
+FILE_EXT = '.tar.gz'
 FILE_ZERO = FILE_PREFIX + '0000' + FILE_EXT
-FILE_SIZE_LIMIT = 536870912 # The number of bytes in 0.5GB. At this max, even if the script has to read a binary file close to this size, it can still run under 60 seconds. 
+GIGABYTE = 1073741824
 LOG_FILE = 'log.csv'
 LOG_FIELD_1 = 'time'
 LOG_FIELD_2 = 'duration'
@@ -88,7 +88,7 @@ def find_latest_file():
     while found_file == False:
         fn_test = FILE_PREFIX + f'{counter:04}' + FILE_EXT
         fn_exist = True if os.path.exists(fn_test) else False
-        fn_right_size = True if fn_exist and os.path.getsize(fn_test) < FILE_SIZE_LIMIT else False
+        fn_right_size = True if fn_exist and os.path.getsize(fn_test) < GIGABYTE else False
         if fn_exist == False:
             filename = fn_test
             need_new_file = True
@@ -102,14 +102,14 @@ def find_latest_file():
     return filename, need_new_file
 
 def save_records(records, filename):
-    with open(filename, 'wb') as f:
+    with gzip.open(filename, 'wb') as f:
         f.write(records.SerializeToString())
 
 def add_record():
     filename, need_new_file = find_latest_file()
     records = records_pb2.Records()
     if not(need_new_file):
-        with open(filename, 'rb') as f:
+        with gzip.open(filename, 'rb') as f:
             records.ParseFromString(f.read())
     record = records.record.add()
     gen_record(record)
@@ -119,12 +119,12 @@ def read_record():
     from google.protobuf.json_format import MessageToJson
     filename, need_new_file = find_latest_file()
     records = records_pb2.Records()
-    with open(filename, 'rb') as f:
+    with gzip.open(filename, 'rb') as f:
         records.ParseFromString(f.read())
     data_raw = MessageToJson(records)
     data_json = json.loads(data_raw)
     with open('test.json', 'w+') as f:
-        f.write(json.dumps(str(data_json['record'][0])))
+        f.write(json.dumps(str(data_json['record'])))
     return('Done')
 
 def log_run(start_time, end_time, filename):
@@ -143,9 +143,14 @@ def log_run(start_time, end_time, filename):
         logwriter.writerow(new_row)
     return new_row
 
-start_time = datetime.now()
-records, filename = add_record()
-save_records(records, filename)
-end_time = datetime.now()
-log_run(start_time, end_time, filename)
-#print(read_record())
+def datapull():
+    start_time = datetime.now()
+    records, filename = add_record()
+    save_records(records, filename)
+    end_time = datetime.now()
+    run_data = log_run(start_time, end_time, filename)
+    filesize_gb = '{:.2f}'.format(run_data[LOG_FIELD_3] / GIGABYTE) if run_data[LOG_FIELD_3] > GIGABYTE/100 else '< 0.01'
+    return 'Process completed at ' +end_time.strftime('%Y-%m-%d %H:%M:%S') +' in ' +str(run_data[LOG_FIELD_2]) +'ms. File ' +filename +' is now ' +filesize_gb +'GB.'
+
+#print(datapull())
+print(read_record())
