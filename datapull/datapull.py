@@ -152,5 +152,5 @@ def datapull():
     filesize_gb = '{:.2f}'.format(run_data[LOG_FIELD_3] / GIGABYTE) if run_data[LOG_FIELD_3] > GIGABYTE/100 else '< 0.01'
     return 'Process completed at ' +end_time.strftime('%Y-%m-%d %H:%M:%S') +' in ' +str(run_data[LOG_FIELD_2]) +'ms. File ' +filename +' is now ' +filesize_gb +'GB.'
 
-#print(datapull())
-print(read_record())
+print(datapull())
+#print(read_record())
