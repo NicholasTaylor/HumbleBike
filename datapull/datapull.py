@@ -1,4 +1,4 @@
-import json, records_pb2, os, gzip
+import json, records_pb2, os, gzip, requests
 from datetime import datetime
 
 STATION_INFORMATION = 'https://gbfs.citibikenyc.com/gbfs/en/station_information.json'
@@ -13,6 +13,23 @@ LOG_FILE = 'log.csv'
 LOG_FIELD_1 = 'time'
 LOG_FIELD_2 = 'duration'
 LOG_FIELD_3 = 'filesize'
+WEATHER_PREFIX = 'https://api.weather.gov/stations/'
+WEATHER_STATION = 'KNYC'
+WEATHER_SUFFIX = '/observations/latest'
+WEATHER_LATEST = WEATHER_PREFIX +WEATHER_STATION +WEATHER_SUFFIX
+
+def gen_weather_data():
+    r = requests.get(WEATHER_LATEST)
+    r_json = r.json()
+    weather = r_json['properties']
+    output = {
+        'temperature': round(weather['temperature']['value'],2),
+        'wind_speed': round(weather['windSpeed']['value'],2),
+        'wind_direction': weather['windDirection']['value'],
+        'relative_humidity': round(weather['relativeHumidity']['value'],2),
+        'conditions': weather['textDescription']
+    }
+    return output
 
 def sort_station_id(e):
     return int(e['station_id'])
@@ -55,7 +72,6 @@ def gen_station(inst, station):
             setattr(inst, attr, attr_value)
 
 def get_json(info_url, status_url):
-    import requests
     station_map = {}
     station_arr = []
     r_info = requests.get(info_url).json()['data']['stations']
@@ -77,8 +93,10 @@ def gen_stations(inst, station_arr):
 
 def gen_record(record):
     import time
-    json_out = get_json(STATION_INFORMATION,STATION_STATUS)
-    gen_stations(record.stations,json_out)
+    stations_data = get_json(STATION_INFORMATION,STATION_STATUS)
+    weather_data = gen_weather_data()
+    gen_stations(record.stations,stations_data)
+    gen_station(record.weather,weather_data)
     record.date.FromSeconds(int(time.mktime(datetime.now().timetuple())))
 
 def find_latest_file():
@@ -153,5 +171,5 @@ def datapull():
     filesize_gb = '{:.2f}'.format(run_data[LOG_FIELD_3] / GIGABYTE) if run_data[LOG_FIELD_3] > GIGABYTE/100 else '< 0.01'
     return 'Process completed at ' +end_time.strftime('%Y-%m-%d %H:%M:%S') +' in ' +str(run_data[LOG_FIELD_2]) +'ms. File ' +filename +' is now ' +filesize_gb +'GB.'
 
-print(datapull())
-#print(read_record())
+#print(datapull())
+print(read_record())
