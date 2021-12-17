@@ -74,9 +74,18 @@ message Stations {
     repeated Station station = 1;
 }
 
+message Weather {
+    optional float temperature = 1;
+    optional float wind_speed = 2;
+    optional int32 wind_direction = 3;
+    optional float relative_humidity = 4;
+    optional string conditions = 5;
+}
+
 message Record {
     optional google.protobuf.Timestamp date = 1;
-    optional Stations stations = 2;
+    optional Weather weather = 2;
+    optional Stations stations = 3;
 }
 
 message Records {
