@@ -50,7 +50,7 @@ def gen_station(inst, station):
             continue
         else:
             pass
-        attr_value = station[attr]
+        attr_value = station[attr] if station[attr] is not None else 'N/A'
         type_test = type(attr_value).__name__
         attr_type_test = type(getattr(inst,attr)).__name__
         try:
@@ -69,7 +69,11 @@ def gen_station(inst, station):
         elif attr_type_test == 'Timestamp':
             getattr(getattr(inst, attr), 'FromSeconds')(int(attr_value))
         else:
-            setattr(inst, attr, attr_value)
+            try:
+                setattr(inst, attr, attr_value)
+            except:
+                pass
+
 
 def get_json(info_url, status_url):
     station_map = {}
@@ -143,7 +147,7 @@ def read_record():
     data_raw = MessageToJson(records)
     data_json = json.loads(data_raw)
     with open('test.json', 'w+') as f:
-        f.write(json.dumps(str(data_json['record'])))
+        f.write(json.dumps(data_json['record']))
     return('Done')
 
 def log_run(start_time, end_time, filename):
