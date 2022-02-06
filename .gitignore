@@ -8,7 +8,9 @@ datapull/__pycache__
 
 # testing
 frontend/coverage
-datapull/output.json
+datapull/test.json
+datapull/test-pretty.json
+datapull/settings.json
 
 # production
 frontend/build
@@ -22,7 +24,7 @@ frontend/src/design
 # outputs
 datapull/*.tar.gz
 datapull/*.csv
-datapull/records_pb2.py
+datapull/*_pb2.py
 
 # misc
 frontend/.env.local

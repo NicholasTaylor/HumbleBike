@@ -1,0 +1,8 @@
+version: "3.6"
+
+services: 
+    datapull:
+        build: ./datapull
+        volumes: 
+            - './datapull:/opt/datapull'
+        command: python dataprep.py
