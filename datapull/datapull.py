@@ -1,4 +1,3 @@
-from gettext import find
 import json, records_pb2, os, gzip, requests
 from datetime import datetime
 
@@ -22,15 +21,21 @@ WEATHER_STATION = 'KNYC'
 WEATHER_SUFFIX = '/observations/latest'
 WEATHER_LATEST = WEATHER_PREFIX +WEATHER_STATION +WEATHER_SUFFIX
 
+def round_metrics_to_two(value):
+    try:
+        return round(value,2)
+    except:
+        return None
+
 def gen_weather_data():
     r = requests.get(WEATHER_LATEST)
     r_json = r.json()
     weather = r_json['properties']
     output = {
-        'temperature': round(weather['temperature']['value'],2),
-        'wind_speed': round(weather['windSpeed']['value'],2),
+        'temperature': round_metrics_to_two(weather['temperature']['value']),
+        'wind_speed': round_metrics_to_two(weather['windSpeed']['value']),
         'wind_direction': weather['windDirection']['value'],
-        'relative_humidity': round(weather['relativeHumidity']['value'],2),
+        'relative_humidity': round_metrics_to_two(weather['relativeHumidity']['value']),
         'conditions': weather['textDescription']
     }
     return output
@@ -177,9 +182,9 @@ def add_record(start_page):
     gen_record(record)
     return records, filename, current_page
 
-def read_record():
+def read_record(start_page):
     from google.protobuf.json_format import MessageToJson
-    filename, need_new_file = find_latest_file()
+    filename, need_new_file, current_page = find_latest_file(start_page)
     records = records_pb2.Records()
     with gzip.open(filename, 'rb') as f:
         records.ParseFromString(f.read())
@@ -229,5 +234,5 @@ def datapull():
     filesize_gb = '{:.2f}'.format(run_data[LOG_FIELD_3] / GIGABYTE) if run_data[LOG_FIELD_3] > GIGABYTE/100 else '< 0.01'
     return 'Process completed at ' +end_time.strftime('%Y-%m-%d %H:%M:%S') +' in ' +str(run_data[LOG_FIELD_2]) +'ms. File ' +filename +' is now ' +filesize_gb +'GB.'
 
-print(datapull())
-#print(read_record())
+#print(datapull())
+print(read_record(find_start_page()))
