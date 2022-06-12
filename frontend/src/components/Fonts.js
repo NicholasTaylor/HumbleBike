@@ -1,5 +1,5 @@
 import React from 'react';
-import {ADOBE_FONTS, GOOGLE_FONTS} from '../constants/fonts';
+import {ADOBE_FONTS, GOOGLE_FONTS} from '../constants/config';
 
 function CustomFonts(){
 	const JSX_ADOBE = ADOBE_FONTS ? (

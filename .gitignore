@@ -15,8 +15,8 @@ datapull/settings.json
 # production
 frontend/build
 
-# fonts
-frontend/src/constants/fonts.js
+# sensitive
+frontend/src/constants/config.js
 
 # design files
 frontend/src/design

@@ -14,6 +14,7 @@ import {
   space,
 } from "./constants/style";
 import { css, jsx } from "@emotion/react";
+import { NYC_API } from "./constants/config";
 /** @jsxRuntime classic */
 /** @jsx jsx */ export default function App() {
   const [location, setLocation] = useState({});
@@ -32,6 +33,9 @@ import { css, jsx } from "@emotion/react";
   const [searchClicks, setSearchClicks] = useState(0);
   const [address, setAddress] = useState({});
   const [inputErrors, setInputErrors] = useState(null);
+  const [street, setStreet] = useState('');
+  const [houseNumber, setHouseNumber] = useState('');
+  const [zip, setZip] = useState('');
 
   const endpointInfo =
     "https://gbfs.citibikenyc.com/gbfs/en/station_information.json";
@@ -42,130 +46,29 @@ import { css, jsx } from "@emotion/react";
   const dispViewElemsFlex = `${useTripPlanner ? `none`: `flex`}`;
   const dispTripElems = `${useTripPlanner ? `block`: `none`}`;
 
-  const searchStations = useCallback((e) => {
-    if (e !== undefined) {
-      setSearchQuery(e.target.value);
-    }
-  }, []);
+  /* Start: Click Handlers and Toggles */
+  const handleClick = () => {
+    setManualRefresh(manualRefresh + 1);
+  }
 
-  const handleClick = useCallback(
-    (e) => {
-      setManualRefresh(manualRefresh + 1);
-    },
-    [manualRefresh]
-  );
-
-  const handleClickTrip = useCallback((e) => {
+  const handleClickTrip = () => {
       setUseTripPlanner(!useTripPlanner);
-  },[useTripPlanner]);
-
-  const validateNoNulls = (fieldName, fieldValue) => {
-    return fieldValue.length > 0
-      ? false
-      : `Please provide a value for ${fieldName}`;
   };
 
-  const validateZip = (fieldValue) => {
-    return fieldValue.length === 5 && fieldValue.isInteger()
-      ? false
-      : `Please provide a valid US zip code (5 digit number).`;
+  const toggleElec = () => {
+    setFilterElec(!filterElec);
   };
 
-  const handleClickAddr = useCallback(
-    (e) => {
-      let inputStreet = document.querySelector("#street");
-      let inputHouseNumber = document.querySelector("#houseNumber");
-      let inputZip = document.querySelector("#zip");
-      const inputs = [
-        {
-          name: "street",
-          value: inputStreet,
-        },
-        {
-          name: "houseNumber",
-          value: inputHouseNumber,
-        },
-        {
-          name: "zip",
-          value: inputZip,
-        },
-      ];
-      const validationErrs = [];
-      for (let input in inputs) {
-        let noNullResult = validateNoNulls(input["name"], input["value"]);
-        if (noNullResult) {
-          validationErrs.append(noNullResult);
-        }
-      }
-      let validZipResult = validateZip(inputZip);
-      if (validZipResult) {
-        validationErrs.append(validZipResult);
-      }
-      if (validationErrs.length > 0) {
-        let output = "";
-        for (let i = 0; i < validationErrs.length; i++) {
-          let validationErr = validationErrs[i];
-          let newline = i === validationErrs - 1 ? `<br />` : ``;
-          output += `${validationErr}${newline}`;
-        }
-        setInputErrors(output);
-      } else {
-        setAddress({
-          street: inputStreet,
-          houseNumber: inputHouseNumber,
-          zip: inputZip,
-        });
-      }
-    },
-    [searchClicks]
-  );
-
-  const onError = (error) => {
-    setError(error.message);
+  const toggleDock = () => {
+    setFilterDock(!filterDock);
   };
 
-  const updateStationDist = useCallback(
-    (stationList) => {
-      if (location && stationList && !error) {
-        return SortStations(
-          UpdateDistance(location.latitude, location.longitude, stationList),
-          true
-        );
-      } else {
-        return SortStations(stationList, false);
-      }
-    },
-    [error, location]
-  );
-
-  const getAddress = useCallback(() => {
-    const uri = `${endpointAddress}?street=${address["street"]}&houseNumber=${address["houseNumber"]}&zip=${address["zip"]}`;
-  }, []);
-
-  const getStationInfo = useCallback(() => {
-    if (Object.keys(stationInfo).length === 0) {
-      console.log("First run - station info.");
-      GetStation(endpointInfo).then((response) => {
-        const allStationInfo = response.data.stations;
-        const stationMap = {};
-        for (let info_idx = 0; info_idx < allStationInfo.length; info_idx++) {
-          let station = allStationInfo[info_idx];
-          stationMap[station.station_id] = {
-            station_id: station.station_id,
-            lat: station.lat,
-            lon: station.lon,
-            name: station.name,
-          };
-        }
-        setStationInfo(stationMap);
-      });
-    }
-    return stationInfo;
-  }, [stationInfo]);
+  const toggleElecFree = () => {
+    setFilterElecFree(!filterElecFree);
+  };
 
   const toggleOptions = () => {
     const animateOptions = new Promise((resolve, reject) => {
-      console.log(`options: ${options}`);
       const icon = document.getElementById("options-icon");
       const panel = document.getElementById("options-panel");
       if (options) {
@@ -183,71 +86,127 @@ import { css, jsx } from "@emotion/react";
     });
     animateOptions.then(setOptions(!options));
   };
+  /*End: Click Handlers and Toggles */
 
-  const toggleElec = () => {
-    setFilterElec(!filterElec);
-  };
-
-  const toggleDock = () => {
-    setFilterDock(!filterDock);
-  };
-
-  const toggleElecFree = () => {
-    setFilterElecFree(!filterElecFree);
-  };
-
-  useEffect(() => {
-    const geo = navigator.geolocation;
-
-    const onLocationChange = ({ coords }) => {
-      if (!geo) {
-        setError("Location not available.");
-        return;
-      }
-      const minDist = 0.0075;
-      const locDelta = Haversine(
-        location.latitude,
-        location.longitude,
-        coords.latitude,
-        coords.longitude,
-        5
-      );
-      console.log(
-        `locDelta = ${locDelta}\nminDist = ${minDist}\nerror = ${error}\ncoords = ${coords.latitude}, ${coords.longitude}`
-      );
-      if (locDelta > minDist || error || isNaN(locDelta)) {
-        setLocation({
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-        });
-      }
-    };
-
-    const update = geo.watchPosition(onLocationChange, onError);
-    setStations((s) => updateStationDist({ ...s }));
-
-    return () => {
-      geo.clearWatch(update);
-    };
-  }, [location, error, updateStationDist]);
-
-  useEffect(() => {
-    const blankQuery = searchQuery.length === 0 ? true : false;
-    const stationCopy = { ...stations };
-    for (let station in stationCopy) {
-      const target = stationCopy[station];
-      const source = {
-        name: target.name,
-        isVisible:
-          blankQuery ||
-          target.name.toLowerCase().includes(searchQuery.toLowerCase())
-            ? true
-            : false,
-      };
-      Object.assign(target, source);
+  /*Start: Callbacks */
+  const updateInput = useCallback((e) => {
+    e.preventDefault();
+    if (e === undefined) {
+      return;
     }
-  }, [searchQuery, stations]);
+    let newVal = e.target.value;
+    switch(e.target.id){
+      case 'street':
+        setStreet(newVal);
+        break;
+      case 'houseNumber':
+        setHouseNumber(newVal);
+        break;
+      case 'zip':
+        setZip(newVal);
+        break;
+      case 'search':
+        setSearchQuery(newVal);
+        break;
+    }
+  }, []);
 
+  const updateStationDist = useCallback(
+    (stationList) => {
+      if (location && stationList && !error) {
+        return SortStations(
+          UpdateDistance(location.latitude, location.longitude, stationList),
+          true
+        );
+      } else {
+        return SortStations(stationList, false);
+      }
+    },
+    [error, location]
+  );
+
+  const searchDestAddr = () => {
+    const inputs = [
+      {
+        name: `street`,
+        value: street,
+      },
+      {
+        name: `houseNumber`,
+        value: houseNumber,
+      },
+      {
+        name: `zip`,
+        value: zip,
+      },
+    ];
+    const validationErrs = [];
+
+    const validateNoNulls = (fieldName, fieldValue) => {
+      return fieldValue.length > 0
+        ? false
+        : `Please provide a value for ${fieldName}`;
+    };
+  
+    const validateZip = (zip) => {
+      return zip.length === 5 && zip.match(/^[0-9]*$/) !== null
+        ? false
+        : `Please provide a valid US zip code (5 digit number).`;
+    };
+    
+    for (let i = 0; i < inputs.length; i++) {
+      let input = inputs[i];
+      let noNullResult = validateNoNulls(input.name, input.value);
+      if (noNullResult) {
+        validationErrs.push(noNullResult);
+      }
+    }
+    let zipError = validateZip(inputs[2].value);
+    if (zipError) {
+      validationErrs.push(zipError);
+    }
+    if (validationErrs.length > 0) {
+      let output = ``;
+      for (let i = 0; i < validationErrs.length; i++) {
+        let validationErr = validationErrs[i];
+        let newline = i === validationErrs - 1 ? `<br />` : ``;
+        output += `${validationErr}${newline}`;
+      }
+      setInputErrors(output);
+    } else {
+      setAddress({
+        street: inputs[0].value,
+        houseNumber: inputs[1].value,
+        zip: inputs[2].value,
+      });
+      setInputErrors(null);
+      setSearchClicks(searchClicks+ 1)
+    }
+  };
+
+  const getStationInfo = useCallback(() => {
+    if (Object.keys(stationInfo).length === 0) {
+      GetStation(endpointInfo).then((response) => {
+        const allStationInfo = response.data.stations;
+        const stationMap = {};
+        for (let info_idx = 0; info_idx < allStationInfo.length; info_idx++) {
+          let station = allStationInfo[info_idx];
+          stationMap[station.station_id] = {
+            station_id: station.station_id,
+            lat: station.lat,
+            lon: station.lon,
+            name: station.name,
+          };
+        }
+        setStationInfo(stationMap);
+      });
+    }
+    return stationInfo;
+  }, [stationInfo]);
+  /*End: Callbacks */
+
+  /* Start Effect: Fetch Citi Bike data
+  Fetches the most up-to-date data from Citi Bike's servers. */
   useEffect(() => {
     const autoRefresh = setInterval(() => {
       setTimedRefresh(timedRefresh + 1);
@@ -291,6 +250,87 @@ import { css, jsx } from "@emotion/react";
       clearInterval(autoRefresh);
     };
   }, [timedRefresh, manualRefresh, error, getStationInfo, updateStationDist]);
+  /* End Effect: Fetch Citi Bike data */
+
+  /* Start Effect: Fetch geolocation data
+  Gets/updates user's location in lat/lon computes distance to all docks based on current geo data. Fires on regular intervals. */
+  useEffect(() => {
+    const geo = navigator.geolocation;
+
+    const onError = (error) => {
+      setError(error.message);
+    };
+
+    const onLocationChange = ({ coords }) => {
+      if (!geo) {
+        setError("Location not available.");
+        return;
+      }
+      const minDist = 0.0075;
+      const locDelta = Haversine(
+        location.latitude,
+        location.longitude,
+        coords.latitude,
+        coords.longitude,
+        5
+      );
+      if (locDelta > minDist || error || isNaN(locDelta)) {
+        setLocation({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        });
+      }
+    };
+
+    const update = geo.watchPosition(onLocationChange, onError);
+    setStations((s) => updateStationDist({ ...s }));
+
+    return () => {
+      geo.clearWatch(update);
+    };
+  }, [location, error, updateStationDist]);
+  /* End Effect: Fetch geolocation data*/
+
+  /* Start Effect: Update search results
+  Toggles visibility for stations based on search query; fires whenever query or stations have been changed*/
+  useEffect(() => {
+    const blankQuery = searchQuery.length === 0 ? true : false;
+    const stationCopy = { ...stations };
+    for (let station in stationCopy) {
+      const target = stationCopy[station];
+      const source = {
+        name: target.name,
+        isVisible:
+          blankQuery ||
+          searchQuery.toLowerCase().split(' ').reduce((acc, cur) => {return acc === true && target.name.toLowerCase().indexOf(cur) !== -1 ? true : false}, true)
+            ? true
+            : false,
+      };
+      Object.assign(target, source);
+    }
+  }, [searchQuery, stations]);
+  /* End Effect: Update search results */
+
+  /* Start Effect: Convert Destination to Lat/Lon
+  Searches an NYC government API for the address the user provided. If it exists, it'll return coordinates. If it doesn't, it'll return an array of addresses the API suspects the user actually means.
+  */
+
+  useEffect(() => {
+    const uri = `${endpointAddress}?street=${address.street}&houseNumber=${address.houseNumber}&zip=${address.zip}`;
+    if (Object.values(address).length > 0) {
+      fetch(uri,{
+        method: 'GET',
+        headers: {
+          'Ocp-Apim-Subscription-Key': NYC_API
+        }
+      })
+        .then((response) => { return response.json() })
+        .then((json) => { console.log(`Lat: ${json.address.latitude}}\nLon: ${json.address.longitude}`) })
+    } else {
+    }
+  }, [searchClicks])
+
+  /* End Effect: */
 
   return (
     <div
@@ -454,7 +494,8 @@ import { css, jsx } from "@emotion/react";
                   label="search"
                   placeholder="Search"
                   value={searchQuery}
-                  onChange={(e) => searchStations(e)}
+                  onChange={(e) => updateInput(e)}
+                  id="search"
                   css={css`
                     box-sizing: border-box;
                     width: 100%;
@@ -612,6 +653,61 @@ import { css, jsx } from "@emotion/react";
                 <Station key={station.station_id} data={station} />
               ))}
             </div>
+          </div>
+          <div
+            css={css`
+                display: ${dispTripElems};
+                button, input {
+                  width: 100%;
+                  font-family: ${inter}, ${fontFamily};
+                  font-weight: ${fontWeight["bold"]};
+                  font-size: ${fontSize[4]};
+                  padding: 0 ${space[4]};
+                  line-height: ${fontSize[7]};
+                  position: relative;
+                  margin: ${space[3]} 0;
+                  border-radius: ${space[4]};
+                }
+                input {
+                  box-sizing: border-box;
+                  border: 1px solid #808080;
+                }
+                button {
+                  background-color: black;
+                  color: white;
+                  border: none;
+                }
+            `}
+          >
+            <input
+              type="text"
+              label="houseNumber"
+              placeholder="House Number"
+              id="houseNumber"
+              value={houseNumber}
+              onChange={(e) => updateInput(e)}              
+            />
+            <input
+              type="text"
+              label="street"
+              placeholder="Street"
+              id="street"
+              value={street}
+              onChange={(e) => updateInput(e)}              
+            />
+            <input
+              type="text"
+              label="zip"
+              placeholder="Zip"
+              id="zip"
+              value={zip}
+              onChange={(e) => updateInput(e)}              
+            />
+            <button
+              onClick={(e) => searchDestAddr(e.value)}
+            >
+              Search
+            </button>
           </div>
         </div>
       </div>
