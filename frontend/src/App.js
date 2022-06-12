@@ -35,7 +35,7 @@ import { NYC_API } from "./constants/config";
   const [inputErrors, setInputErrors] = useState(null);
   const [street, setStreet] = useState('');
   const [houseNumber, setHouseNumber] = useState('');
-  const [zip, setZip] = useState('');
+  const [borough, setBorough] = useState('');
 
   const endpointInfo =
     "https://gbfs.citibikenyc.com/gbfs/en/station_information.json";
@@ -102,11 +102,13 @@ import { NYC_API } from "./constants/config";
       case 'houseNumber':
         setHouseNumber(newVal);
         break;
-      case 'zip':
-        setZip(newVal);
+      case 'borough':
+        setBorough(newVal);
         break;
       case 'search':
         setSearchQuery(newVal);
+        break;
+      default:
         break;
     }
   }, []);
@@ -136,8 +138,8 @@ import { NYC_API } from "./constants/config";
         value: houseNumber,
       },
       {
-        name: `zip`,
-        value: zip,
+        name: `borough`,
+        value: borough,
       },
     ];
     const validationErrs = [];
@@ -147,12 +149,6 @@ import { NYC_API } from "./constants/config";
         ? false
         : `Please provide a value for ${fieldName}`;
     };
-  
-    const validateZip = (zip) => {
-      return zip.length === 5 && zip.match(/^[0-9]*$/) !== null
-        ? false
-        : `Please provide a valid US zip code (5 digit number).`;
-    };
     
     for (let i = 0; i < inputs.length; i++) {
       let input = inputs[i];
@@ -161,10 +157,7 @@ import { NYC_API } from "./constants/config";
         validationErrs.push(noNullResult);
       }
     }
-    let zipError = validateZip(inputs[2].value);
-    if (zipError) {
-      validationErrs.push(zipError);
-    }
+
     if (validationErrs.length > 0) {
       let output = ``;
       for (let i = 0; i < validationErrs.length; i++) {
@@ -177,7 +170,7 @@ import { NYC_API } from "./constants/config";
       setAddress({
         street: inputs[0].value,
         houseNumber: inputs[1].value,
-        zip: inputs[2].value,
+        borough: inputs[2].value,
       });
       setInputErrors(null);
       setSearchClicks(searchClicks+ 1)
@@ -316,7 +309,7 @@ import { NYC_API } from "./constants/config";
   */
 
   useEffect(() => {
-    const uri = `${endpointAddress}?street=${address.street}&houseNumber=${address.houseNumber}&zip=${address.zip}`;
+    const uri = `${endpointAddress}?street=${address.street}&houseNumber=${address.houseNumber}&borough=${address.borough}`;
     if (Object.values(address).length > 0) {
       fetch(uri,{
         method: 'GET',
@@ -325,7 +318,28 @@ import { NYC_API } from "./constants/config";
         }
       })
         .then((response) => { return response.json() })
-        .then((json) => { console.log(`Lat: ${json.address.latitude}}\nLon: ${json.address.longitude}`) })
+        .then((json) => { 
+          let data = json.address;
+          let successCodes = ['00', '01'];
+          if (successCodes.includes(data.geosupportReturnCode)){
+            console.log(`Lat: ${data.latitude}\nLon: ${data.longitude}`);
+          } else {
+            switch (data.geosupportReturnCode) {
+              case 42:
+                console.log(`That street number doesn't exist on this street. Please double check your address.`);
+              case 'EE':
+                console.log(`Street not found. Did you mean one of these?`);
+                for (let i = 1; i <= 6; i++){
+                  if (data[`streetName${i}`]){
+                    console.log(data[`streetName${i}`])
+                  }
+                }
+                break;
+              default:
+                break;
+            }
+          }
+        })
     } else {
     }
   }, [searchClicks])
@@ -657,16 +671,21 @@ import { NYC_API } from "./constants/config";
           <div
             css={css`
                 display: ${dispTripElems};
-                button, input {
+                button, input, select {
                   width: 100%;
                   font-family: ${inter}, ${fontFamily};
                   font-weight: ${fontWeight["bold"]};
                   font-size: ${fontSize[4]};
-                  padding: 0 ${space[4]};
                   line-height: ${fontSize[7]};
                   position: relative;
                   margin: ${space[3]} 0;
                   border-radius: ${space[4]};
+                }
+                button, input {
+                  padding: 0 ${space[4]};
+                }
+                select {
+                  padding: ${space[3]} ${space[4]};
                 }
                 input {
                   box-sizing: border-box;
@@ -695,14 +714,41 @@ import { NYC_API } from "./constants/config";
               value={street}
               onChange={(e) => updateInput(e)}              
             />
-            <input
-              type="text"
-              label="zip"
-              placeholder="Zip"
-              id="zip"
-              value={zip}
-              onChange={(e) => updateInput(e)}              
-            />
+            <select
+              id="borough"
+              onChange={(e) => updateInput(e)}
+            >
+              <option
+                value=""
+              >
+                Select Borough
+              </option>
+              <option
+                value="manhattan"
+              >
+                Manhattan
+              </option>
+              <option
+                value="brooklyn"
+              >
+                Brooklyn
+              </option>
+              <option
+                value="queens"
+              >
+                Queens
+              </option>
+              <option
+                value="bronx"
+              >
+                The Bronx
+              </option>
+              <option
+                value="staten island"
+              >
+                Staten Island
+              </option>
+            </select>
             <button
               onClick={(e) => searchDestAddr(e.value)}
             >
