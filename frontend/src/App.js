@@ -36,6 +36,7 @@ import { NYC_API } from "./constants/config";
   const [street, setStreet] = useState('');
   const [houseNumber, setHouseNumber] = useState('');
   const [borough, setBorough] = useState('');
+  const [isModalError, setIsModalError] = useState(true);
 
   const endpointInfo =
     "https://gbfs.citibikenyc.com/gbfs/en/station_information.json";
@@ -54,6 +55,10 @@ import { NYC_API } from "./constants/config";
   const handleClickTrip = () => {
       setUseTripPlanner(!useTripPlanner);
   };
+
+  const handleClickError = () => {
+    setIsModalError(false);
+  }
 
   const toggleElec = () => {
     setFilterElec(!filterElec);
@@ -98,6 +103,10 @@ import { NYC_API } from "./constants/config";
     switch(e.target.id){
       case 'street':
         setStreet(newVal);
+        break;
+      case 'street-correction':
+        setStreet(e.target.innerText);
+        handleClickError();
         break;
       case 'houseNumber':
         setHouseNumber(newVal);
@@ -310,6 +319,37 @@ import { NYC_API } from "./constants/config";
 
   useEffect(() => {
     const uri = `${endpointAddress}?street=${address.street}&houseNumber=${address.houseNumber}&borough=${address.borough}`;
+
+    const generateErr = (headTxt, copyTxt, isCustom = false) => {
+      let modal = document.getElementById('modal-error');
+      let allPrev = [modal.getElementsByTagName('h1'), modal.getElementsByTagName('h2'), modal.getElementsByTagName('copy'), modal.getElementsByClassName('err-list')];
+      let headline = document.createElement('h1');
+      headline.innerText = `Error`;
+      let subhead = document.createElement('h2');
+      subhead.innerText = headTxt;
+      let copy;
+      if (isCustom) {
+        copy = copyTxt;
+      } else {
+        copy = document.createElement('p');
+        copy.innerText = copyTxt;        
+      }
+
+      for (let x = 0; x < allPrev.length; x++){
+        let arr = allPrev[x];
+        if (arr.length > 0){
+          for (let y = arr.length - 1; y >= 0; y--){
+            modal.removeChild(arr[y]);
+          }
+        }
+      }
+      modal.appendChild(headline);
+      modal.appendChild(subhead);
+      modal.appendChild(copy);
+      setIsModalError(true);
+      return;
+    }
+
     if (Object.values(address).length > 0) {
       fetch(uri,{
         method: 'GET',
@@ -325,14 +365,51 @@ import { NYC_API } from "./constants/config";
             console.log(`Lat: ${data.latitude}\nLon: ${data.longitude}`);
           } else {
             switch (data.geosupportReturnCode) {
-              case 42:
-                console.log(`That street number doesn't exist on this street. Please double check your address.`);
+              case '42':
+                generateErr(`House Number Not Found`,`That house number doesn't exist on this street. Please double check your address.`);
+                break;
               case 'EE':
-                console.log(`Street not found. Did you mean one of these?`);
+                let streetArr = [];
+
+                const TitleCase = (str) => {
+                  let strArr = str.split(' ');
+                  return strArr.reduce((acc, cur, idx) => {
+                    let space = idx + 1 >= strArr.length ? `` : ` `;
+                    let first = cur.slice(0,1);
+                    let rest = cur.slice(1);
+                    let curTitle = `${first.toUpperCase()}${rest.toLowerCase()}`;
+                    return acc += `${curTitle}${space}`;
+                  },``);
+                }
+
+                const genItemClickable = (str) => {
+                  let item = document.createElement(`li`);
+                  let btn = document.createElement(`button`);
+                  str.split(' ')
+                  btn.innerText = TitleCase(str);
+                  btn.id =`street-correction`;
+                  btn.onclick = (e) => updateInput(e);
+                  item.appendChild(btn);
+                  return item;
+                }
+                
                 for (let i = 1; i <= 6; i++){
                   if (data[`streetName${i}`]){
-                    console.log(data[`streetName${i}`])
+                   streetArr.push(data[`streetName${i}`])
                   }
+                }
+                if (streetArr.length > 0){
+                  let div = document.createElement(`div`);
+                  let list = document.createElement(`ul`);
+                  let para = document.createElement(`p`);
+                  for (let i = 0; i < streetArr.length; i++){
+                    list.appendChild(genItemClickable(streetArr[i]))
+                  }
+                  para.innerText = `That street doesn't seem to exist. Did you mean one of the below?`;
+                  div.classList.add(`err-list`);
+                  div.appendChild(para);
+                  div.appendChild(list);
+                  generateErr(`Street Not Found`, div, true);
                 }
                 break;
               default:
@@ -344,7 +421,27 @@ import { NYC_API } from "./constants/config";
     }
   }, [searchClicks])
 
-  /* End Effect: */
+  /* End Effect: Convert Destination to Lat/Lon */
+
+  /* Start Effect: Error Modal Transition 
+    Runs when isModalError changes. If new value is true, it turns on the modal's visibility. If false, it turns it off.
+  */
+  useEffect(()=>{
+    let modal = document.getElementById(`modal-error`);
+    let modalBg = document.getElementById(`modal-bg`);
+      if (isModalError){
+        modal.classList.remove(`errorOff`);
+        modalBg.classList.remove(`errorOff`);
+        modal.classList.add(`errorOn`);
+        modalBg.classList.add(`errorOnBg`);
+      } else {
+        modal.classList.remove(`errorOn`);
+        modalBg.classList.remove(`errorOnBg`);
+        modal.classList.add(`errorOff`);
+        modalBg.classList.add(`errorOff`);
+      }
+    },[isModalError])
+  /* End Effect: Error Modal Transition */
 
   return (
     <div
@@ -754,6 +851,110 @@ import { NYC_API } from "./constants/config";
             >
               Search
             </button>
+          </div>
+        </div>
+        <div
+          css={css`
+            .errorOn {
+              visibility: visible;
+              opacity: 1;
+            }
+            .errorOnBg {
+              visibility: visible;
+              opacity: 0.25;
+            }
+            .errorOff {
+              visibility: hidden;
+              opacity: 0;
+            }
+          `}
+        >
+          <div
+            id="modal-bg"
+            css={css`
+              display: ${dispTripElems};
+              position: absolute;
+              z-index: 200;
+              top: 0;
+              left: 0;
+              width: 100vw;
+              height: 100vh;
+              background-color: rgb(0, 0, 0);
+              transition: 0.25s ease-in-out;
+              opacity: 0;
+              visiblity: hidden;
+            `}
+            onClick={()=>handleClickError()}
+          >
+
+          </div>
+          <div
+            id="modal-error"
+            css={css`
+              display: ${dispTripElems};
+              position: absolute;
+              z-index: 201;
+              font-family: ${inter}, ${fontFamily};
+              border: 1px solid #808080;
+              background-color: white;
+              width: 80%;
+              left: 50vw;
+              top: 50vh;
+              transform: translate(-50%, -50%);
+              text-align: center;
+              opacity: 0;
+              visiblity: hidden;
+              h1 {
+                font-size: ${fontSize[6]};
+                font-weight: ${fontWeight.bold};
+                padding: ${space[1]} 0;
+              }
+              h2 {
+                font-size: ${fontSize[3]};
+                padding: ${space[1]} 0;
+              }
+              p {
+                font-size: ${fontSize[2]};
+                padding: ${space[1]} 0;
+              }
+              padding: ${space[2]};
+              .err-list {
+                ul {
+                  padding: 0;
+                  li {
+                    list-style-type: none;
+                    button {
+                      font-family: ${inter}, ${fontFamily};
+                      font-weight: ${fontWeight["bold"]};
+                      font-size: ${fontSize[2]};
+                      line-height: ${fontSize[2]};
+                      position: relative;
+                      margin: ${space[3]} 0;
+                      border-radius: ${space[4]};
+                      padding: ${space[3]} ${space[4]};
+                      background-color: black;
+                      color: white;
+                      border: none;
+                    }
+                  }
+                }
+              }
+              transition: 0.25s ease-in-out;
+            `}
+          >
+            <div
+              css={css`
+                font-family: ${inter}, ${fontFamily};
+                font-weight: ${fontWeight.light};
+                font-size: ${fontSize[2]};
+                position: absolute;
+                top: ${space[2]};
+                right: ${space[3]};
+              `}
+              onClick={()=>handleClickError()}
+            >
+              x
+            </div>
           </div>
         </div>
       </div>
