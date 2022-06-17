@@ -21,6 +21,7 @@ import { NYC_API } from "./constants/config";
   const [error, setError] = useState(null);
   const [stationInfo, setStationInfo] = useState({});
   const [stations, setStations] = useState([]);
+  const [stationsDest, setStationsDest] = useState([])
   const [timedRefresh, setTimedRefresh] = useState(0);
   const [manualRefresh, setManualRefresh] = useState(0);
   const [lastUpdated, setLastUpdated] = useState(new Date().toLocaleString());
@@ -37,6 +38,7 @@ import { NYC_API } from "./constants/config";
   const [houseNumber, setHouseNumber] = useState('');
   const [borough, setBorough] = useState('');
   const [isModalError, setIsModalError] = useState(true);
+  const [destLocation, setDestLocation] = useState(false);
 
   const endpointInfo =
     "https://gbfs.citibikenyc.com/gbfs/en/station_information.json";
@@ -240,6 +242,9 @@ import { NYC_API } from "./constants/config";
               payload.push(target);
             }
           }
+          if (stationsDest.length === 0){
+            setStationsDest(payload);
+          }
           setStations(updateStationDist(payload));
           setLastUpdated(new Date().toLocaleString());
         }
@@ -362,7 +367,7 @@ import { NYC_API } from "./constants/config";
           let data = json.address;
           let successCodes = ['00', '01'];
           if (successCodes.includes(data.geosupportReturnCode)){
-            console.log(`Lat: ${data.latitude}\nLon: ${data.longitude}`);
+            setDestLocation({'latitude': data.latitude, 'longitude': data.longitude})
           } else {
             switch (data.geosupportReturnCode) {
               case '42':
@@ -442,6 +447,16 @@ import { NYC_API } from "./constants/config";
       }
     },[isModalError])
   /* End Effect: Error Modal Transition */
+
+  /* Start Effect: Update Distance from Destination */
+  useEffect(() => {
+    console.log(destLocation);
+    if (destLocation && stationsDest){
+      console.log(`Setting new distances based on lat ${destLocation.latitude}, lon ${destLocation.longitude}`);
+      setStationsDest(SortStations(UpdateDistance(destLocation.latitude, destLocation.longitude, stationsDest), true));
+    }
+  },[destLocation])
+  /* End Effect: Update Distance from Destination */
 
   return (
     <div
@@ -851,6 +866,43 @@ import { NYC_API } from "./constants/config";
             >
               Search
             </button>
+          </div>
+          
+          <div
+            css={css`
+                display: ${dispTripElems};
+                button, input, select {
+                  width: 100%;
+                  font-family: ${inter}, ${fontFamily};
+                  font-weight: ${fontWeight["bold"]};
+                  font-size: ${fontSize[4]};
+                  line-height: ${fontSize[7]};
+                  position: relative;
+                  margin: ${space[3]} 0;
+                  border-radius: ${space[4]};
+                }
+                button, input {
+                  padding: 0 ${space[4]};
+                }
+                select {
+                  padding: ${space[3]} ${space[4]};
+                }
+                input {
+                  box-sizing: border-box;
+                  border: 1px solid #808080;
+                }
+                button {
+                  background-color: black;
+                  color: white;
+                  border: none;
+                }
+            `}
+          >
+            {destLocation &&
+              stationsDest.slice(0,9).map((station) => (
+                <Station key={`dest-${station.station_id}`} data={station} />
+              ))
+            }
           </div>
         </div>
         <div
