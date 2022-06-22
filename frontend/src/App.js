@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import GetStation from "./components/GetStation";
+import FetchData from "./components/FetchData";
 import UpdateDistance from "./components/UpdateDistance";
 import Station from "./components/Station";
 import SortStations from "./components/SortStations";
@@ -190,7 +190,7 @@ import { NYC_API } from "./constants/config";
 
   const getStationInfo = useCallback(() => {
     if (Object.keys(stationInfo).length === 0) {
-      GetStation(endpointInfo).then((response) => {
+      FetchData(endpointInfo).then((response) => {
         const allStationInfo = response.data.stations;
         const stationMap = {};
         for (let info_idx = 0; info_idx < allStationInfo.length; info_idx++) {
@@ -217,7 +217,7 @@ import { NYC_API } from "./constants/config";
     }, 10000);
 
     const requestDataLoad = () => {
-      Promise.all([getStationInfo(), GetStation(endpointStatus)]).then(
+      Promise.all([getStationInfo(), FetchData(endpointStatus)]).then(
         (results) => {
           const stationMap = results[0];
           const allStationStatus = results[1].data.stations;
