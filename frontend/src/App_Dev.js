@@ -1,5 +1,5 @@
 import { useEffect, useReducer } from "react";
-import _, { filter } from 'lodash';
+import _ from 'lodash';
 import { css, jsx } from "@emotion/react";
 
 import Logo from "./components/Logo";
@@ -35,14 +35,14 @@ export default function App() {
   const reducer = (state, action) => {
     switch (action.type) {
       case TOGGLE_FILTER:
-        /*let filterName = action.payload.filterName;
+        let filterName = action.payload.filterName;
         if (filterName){
           return {
             ...state,
             [filterName] : !(state[filterName])
           }
-        }*/
-        console.log(`Click ${action.payload}`)
+        }
+        break;
       case GET_STATION_INFO:
         return {
           ...state,
@@ -55,12 +55,13 @@ export default function App() {
           lastUpdated: action.payload.lastUpdated
         }
       default:
+        console.log(action)
     }
   }
 
   const [state, dispatch]  = useReducer(reducer, initialState);
   
-  const dispViewElems = `${state.useTripPlanner ? `none`: `block`}`;
+  const dispViewElems = `${state['useTripPlanner'] ? `none`: `block`}`;
 
   useEffect(()=>{
     FetchData(endpointInfo)
@@ -213,9 +214,7 @@ export default function App() {
                       stroke-miterlimit: 10;
                     }
                   `}
-                  onClick={dispatch({
-                    type: TOGGLE_OPTIONS
-                  })}
+                  onClick={() => dispatch({ type: TOGGLE_OPTIONS })}
                 >
                   <line x1="-207.13" y1="499.81" x2="1207.08" y2="499.81" />
                   <line x1="499.55" y1="-207.04" x2="499.55" y2="1207.17" />
@@ -244,10 +243,7 @@ export default function App() {
                   <input
                     type="checkbox"
                     label="Electric Only?"
-                    onClick={dispatch({
-                      type: TOGGLE_FILTER,
-                      payload: `filterElec`
-                    })}
+                    onChange = { () => dispatch({ type: TOGGLE_FILTER, payload: `filterElec` }) }
                     checked={state.filterElec ? "checked" : ""}
                   />
                 </div>
@@ -256,10 +252,7 @@ export default function App() {
                   <input
                     type="checkbox"
                     label="Docks Only?"
-                    onClick={dispatch({
-                      type: TOGGLE_FILTER,
-                      payload: `filterDock`
-                    })}
+                    onChange = { () => dispatch({ type: TOGGLE_FILTER, payload: `filterDock` }) }
                     checked={state.filterDock ? "checked" : ""}
                   />
                 </div>
@@ -268,10 +261,7 @@ export default function App() {
                   <input
                     type="checkbox"
                     label="Electric with No Classic?"
-                    onClick={dispatch({
-                      type: TOGGLE_FILTER,
-                      payload: `filterElecFree`
-                    })}
+                    onChange = { () => dispatch({ type: TOGGLE_FILTER, payload: `filterElecFree` }) }
                     checked={state.filterElecFree ? "checked" : ""}
                   />
                   {/* Convert this to a help icon item - <i>(CitiBike waives e-bike charges if there are only e-bikes at a station at the start of the ride)</i> */}
