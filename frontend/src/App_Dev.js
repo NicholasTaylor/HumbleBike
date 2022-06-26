@@ -1,11 +1,13 @@
-import { useEffect, useReducer } from "react";
-import _ from 'lodash';
+import React, { useEffect, useReducer } from "react";
 import { css, jsx } from "@emotion/react";
 
 import Logo from "./components/Logo";
 import CustomFonts from "./components/Fonts";
+import Haversine from "./components/Haversine";
 import FetchData from "./components/FetchData";
 import Station from "./components/Station";
+import UpdateDistance from "./components/UpdateDistance";
+import SortStations from "./components/SortStations";
 
 import {
   fontFamily,
@@ -14,8 +16,9 @@ import {
   fontWeight,
   space,
 } from "./constants/style";
-import { UPDATE_STATION_STATUS, GET_STATION_INFO, TOGGLE_FILTER, UPDATE_QUERY, UPDATE_SEARCH } from "./constants/action-types";
-import { endpointInfo, endpointStatus } from "./constants/endpoints";
+import { UPDATE_STATION_STATUS, GET_STATION_INFO, TOGGLE_FILTER, UPDATE_QUERY, UPDATE_SEARCH, UPDATE_TRIP_ERROR, UPDATE_TRIP_ADDR, UPDATE_LOCATION, UPDATE_ERROR, CORRECT_STREET } from "./constants/action-types";
+import { endpointInfo, endpointStatus, endpointAddress } from "./constants/endpoints";
+import { NYC_API } from "./constants/config";
 
 /** @jsxRuntime classic */
 /** @jsx jsx */
@@ -32,13 +35,48 @@ export default function App() {
     filterElecFree: false,
     filterDock: false,
     searchQuery: ``,
-    error: null
+    error: null,
+    tripHouseNumber: ``,
+    tripStreet: ``,
+    tripBorough: ``,
+    tripAddress: {},
+    tripLocation: {},
+    tripStations: [],
+    tripError: null,
+    isModalError: false
   }
 
   const reducer = (state, action) => {
     switch (action.type) {
+      case CORRECT_STREET:
+        return {
+          ...state,
+          tripStreet: action.payload.tripStreet
+        }
+      case UPDATE_TRIP_ADDR:
+        return {
+          ...state,
+          tripAddress: action.payload.tripAddress
+        }
+      case UPDATE_LOCATION:
+        const locType = action.payload.locType ? action.payload.locType : `default`;
+        if (locType === `trip`){
+          return {
+            ...state,
+            tripLocation: action.payload.tripLocation
+          }
+        } else {
+          return {
+            ...state,
+            location: action.payload.location
+          }
+        }
+      case UPDATE_TRIP_ERROR:
+        return {
+          ...state,
+          tripError: action.payload.tripError
+        }
       case UPDATE_SEARCH:
-        console.log(action.payload)
         return {
           ...state,
           stations: action.payload.stations
@@ -46,7 +84,7 @@ export default function App() {
       case UPDATE_QUERY:
         return {
           ...state,
-          searchQuery: action.payload.searchQuery
+          [action.payload.filterName]: action.payload.value
         }
       case TOGGLE_FILTER:
         let filterName = action.payload.filterName;
@@ -78,11 +116,31 @@ export default function App() {
   const dispViewElemsFlex = `${state['useTripPlanner'] ? `none`: `flex`}`;
   const dispTripElems = `${state['useTripPlanner'] ? `block`: `none`}`;
 
+  /* Start: Error Boundary */
+  class ErrorBoundary extends React.Component {
+    constructor(props){
+      super(props);
+      this.state = { hasReactError: false};
+    }
+
+    static getDerivedStateFromError(reactError){
+      return { hasReactError: true };
+    }
+    
+    render(){
+      if (this.state.hasError){
+        return <h1>Error</h1>
+      }
+      return this.props.children
+    }
+  }
+  /* End: Error Boundary */
+
   /* Start: Helpers and Handles */
   const fetchDynamic = () =>{
     FetchData(endpointStatus)
     .then((response) => {
-      const stationMap = _.cloneDeep(state.stationInfo)
+      const stationMap = { ...state.stationInfo }
       const allStationStatus = response.data.stations;
       const stations = [];
       for (let status_idx = 0; status_idx < allStationStatus.length; status_idx++) {
@@ -112,11 +170,163 @@ export default function App() {
       })
     })
   }
+
+  const updateInput = (e, doUpdateStation = false) => {
+    const updateQuery = new Promise((resolve) => {
+      dispatch({
+        type: UPDATE_QUERY, 
+        payload: {
+          filterName: e.target.id,
+          value: e.target.value
+        }
+      });
+      resolve(true);
+    })
+    updateQuery
+    .then(() => {
+      const blankQuery = state.searchQuery.length === 0 ? true : false;
+      if (blankQuery || !doUpdateStation){
+        return null;
+      }
+      const stationCopy = [ ...state.stations ];
+      for (let station in stationCopy) {
+        const target = stationCopy[station];
+        const source = {
+          name: target.name,
+          isVisible:
+            blankQuery ||
+            state.searchQuery.toLowerCase().split(' ').reduce((acc, cur) => {return acc === true && target.name.toLowerCase().indexOf(cur) !== -1 ? true : false}, true)
+              ? true
+              : false,
+        };
+        Object.assign(target, source);
+      }
+      return stationCopy;
+    })
+    .then( (visibleArr) =>
+      { 
+        if (visibleArr){
+          dispatch({
+            type: UPDATE_SEARCH,
+            payload: {
+              stations: visibleArr
+            }
+          })
+        }
+      }
+    )
+  }
+
+  const searchDestAddr = () => {
+    const inputs = [
+      {
+        name: `street`,
+        value: state.tripStreet,
+      },
+      {
+        name: `houseNumber`,
+        value: state.tripHouseNumber,
+      },
+      {
+        name: `borough`,
+        value: state.tripBorough,
+      },
+    ];
+    const validationErrs = [];
+
+    const validateNoNulls = (fieldName, fieldValue) => {
+      return fieldValue.length > 0
+        ? false
+        : `Please provide a value for ${fieldName}`;
+    };
+    
+    for (let i = 0; i < inputs.length; i++) {
+      let input = inputs[i];
+      let noNullResult = validateNoNulls(input.name, input.value);
+      if (noNullResult) {
+        validationErrs.push(noNullResult);
+      }
+    }
+
+    if (validationErrs.length > 0) {
+      let output = ``;
+      for (let i = 0; i < validationErrs.length; i++) {
+        let validationErr = validationErrs[i];
+        let newline = i === validationErrs - 1 ? `<br />` : ``;
+        output += `${validationErr}${newline}`;
+      }
+      dispatch({
+        type: UPDATE_TRIP_ERROR,
+        payload: {
+          tripError: output
+        }
+      });
+    } else {
+      dispatch({
+        type: UPDATE_TRIP_ADDR,
+        payload: {
+          tripAddress: {
+            street: inputs[0].value,
+            houseNumber: inputs[1].value,
+            borough: inputs[2].value,
+          }
+        }
+      })
+      dispatch({
+        type: UPDATE_TRIP_ERROR,
+        payload: {
+          tripError: null
+        }
+      })
+    }
+  };
+
+  const onError = (error) => {
+    dispatch({
+      type: UPDATE_ERROR,
+      payload: {
+        error: error.message
+      }
+    })
+  };
+  const onLocationChange = ({ coords }) => {
+    if (!coords) {
+      dispatch({
+        type: UPDATE_ERROR,
+        payload: {
+          error: `Location not available.`
+        }
+      });
+      return;
+    }
+    const location = { ...state.location }
+    const error = { ...state.error }
+    const minDist = 0.0075;
+    const locDelta = Haversine(
+      location.latitude,
+      location.longitude,
+      coords.latitude,
+      coords.longitude,
+      5
+    );
+    if (locDelta > minDist || error || isNaN(locDelta)) {
+      dispatch({
+        type: UPDATE_LOCATION,
+        payload: {
+          locType: `default`,
+          location:  {
+              latitude: coords.latitude,
+              longitude: coords.longitude
+          }
+        }
+      });
+    }
+  };
   /* End: Helpers and Handles */
 
   /* Start: Effects */
-  /* Start Effect: Fetch static station data
-  Fetches and populates static station data - namely location coordinates and name. Should only run once per session. */
+  /* Start Effect: Fetch initial data
+  Fetches and populates static station data (name, coordinates) and the user's geolocation coordinates (if possible). Should only run once per session. */
   useEffect(()=>{
     FetchData(endpointInfo)
       .then((response) => {
@@ -139,8 +349,13 @@ export default function App() {
           payload: stationMap
         })
       });
+      const geo = navigator.geolocation;
+      const update = geo.watchPosition(onLocationChange, onError);
+      return () => {
+        geo.clearWatch(update);
+      };
   },[])
-  /* End Effect: Fetch static station data */
+  /* End Effect: Fetch initial data */
 
   /* Start Effect: Fetch dynamic station data
   Fetches and updates dynamic, changing station data - like bike and dock availability */
@@ -149,51 +364,161 @@ export default function App() {
   },[state.stationInfo])
   /* End Effect: Fetch dynamic station data */
 
+  /* Start Effect: Update Distance to Stations 
+  Updates "dist" property in every station whenever user's location changes */
   useEffect(() => {
-    const genVisibleArr = new Promise((resolve, reject) => {
-      const blankQuery = state.searchQuery.length === 0 ? true : false;
-      if (state.stations.length < 1){
-        reject(null);
+    const updateStationDist = new Promise((resolve) => {
+      const stationList = { ...state.stations }
+      if (state.location && stationList && !state.error) {
+        resolve(SortStations(
+          UpdateDistance(state.location.latitude, state.location.longitude, stationList),
+          true
+        ));
+      } else {
+        resolve(SortStations(stationList, false));
       }
-      const stationCopy = [ ...state.stations ];
-      for (let station in stationCopy) {
-        const target = stationCopy[station];
-        const source = {
-          name: target.name,
-          isVisible:
-            blankQuery ||
-            state.searchQuery.toLowerCase().split(' ').reduce((acc, cur) => {return acc === true && target.name.toLowerCase().indexOf(cur) !== -1 ? true : false}, true)
-              ? true
-              : false,
-        };
-        Object.assign(target, source);
-      }
-      resolve(stationCopy)
     })
+    updateStationDist
+      .then((newStations) => {
+        dispatch({
+          type: UPDATE_STATION_STATUS,
+          payload: {
+            stations: newStations,
+            lastUpdated: state.lastUpdated
+          }
+        })
+      });
+    
+  },[state.location, state.error])
+  /* End Effect: Update Distance to Station */
 
-    genVisibleArr.then( (visibleArr) =>
-      { 
-        if (visibleArr){
-          console.log(`VisibleArr: ${JSON.stringify(visibleArr)}`)
-            dispatch({
-              type: UPDATE_SEARCH,
-              payload: {
-                stations: visibleArr
-              }
-            })
+  /* Start Effect: Convert Destination to Lat/Lon
+  Searches an NYC government API for the address the user provided. If it exists, it'll return coordinates. If it doesn't, it'll return an array of addresses the API suspects the user actually means.
+  */
+
+  useEffect(() => {
+    const address = { ...state.tripAddress }
+    const uri = `${endpointAddress}?street=${address.street}&houseNumber=${address.houseNumber}&borough=${address.borough}`;
+
+    const generateErr = (headTxt, copyTxt, isCustom = false) => {
+      let modal = document.getElementById('modal-error');
+      let allPrev = [modal.getElementsByTagName('h1'), modal.getElementsByTagName('h2'), modal.getElementsByTagName('copy'), modal.getElementsByClassName('err-list')];
+      let headline = document.createElement('h1');
+      headline.innerText = `Error`;
+      let subhead = document.createElement('h2');
+      subhead.innerText = headTxt;
+      let copy;
+      if (isCustom) {
+        copy = copyTxt;
+      } else {
+        copy = document.createElement('p');
+        copy.innerText = copyTxt;        
+      }
+
+      for (let x = 0; x < allPrev.length; x++){
+        let arr = allPrev[x];
+        if (arr.length > 0){
+          for (let y = arr.length - 1; y >= 0; y--){
+            modal.removeChild(arr[y]);
+          }
         }
       }
-    )
-    
-  }, [state.searchQuery, state.stations]);
+      modal.appendChild(headline);
+      modal.appendChild(subhead);
+      modal.appendChild(copy);
+      dispatch({type: TOGGLE_FILTER, payload: {filterName: `isModalError`}});
+      return;
+    }
+
+    if (Object.values(address).length > 0) {
+      fetch(uri,{
+        method: 'GET',
+        headers: {
+          'Ocp-Apim-Subscription-Key': NYC_API
+        }
+      })
+        .then((response) => { return response.json() })
+        .then((json) => { 
+          let data = json.address;
+          let successCodes = ['00', '01'];
+          if (successCodes.includes(data.geosupportReturnCode)){
+            dispatch({
+              type:UPDATE_LOCATION, 
+              payload: {
+                locType: `trip`, 
+                tripLocation: {
+                  latitude: data.latitude, 
+                  longitude: data.longitude
+                }
+              }
+            })
+          } else {
+            switch (data.geosupportReturnCode) {
+              case '42':
+                generateErr(`House Number Not Found`,`That house number doesn't exist on this street. Please double check your address.`);
+                break;
+              case 'EE':
+                let streetArr = [];
+
+                const TitleCase = (str) => {
+                  let strArr = str.split(' ');
+                  return strArr.reduce((acc, cur, idx) => {
+                    let space = idx + 1 >= strArr.length ? `` : ` `;
+                    let first = cur.slice(0,1);
+                    let rest = cur.slice(1);
+                    let curTitle = `${first.toUpperCase()}${rest.toLowerCase()}`;
+                    return acc += `${curTitle}${space}`;
+                  },``);
+                }
+
+                const genItemClickable = (str) => {
+                  let item = document.createElement(`li`);
+                  let btn = document.createElement(`button`);
+                  str.split(' ')
+                  btn.innerText = TitleCase(str);
+                  btn.id =`street-correction`;
+                  btn.onclick = (e) => { dispatch({type: CORRECT_STREET, payload: {tripStreet: e.target.innerText}}); dispatch({type: TOGGLE_FILTER, payload: {filterName: `isModalError`}}) };
+                  item.appendChild(btn);
+                  return item;
+                }
+                
+                for (let i = 1; i <= 6; i++){
+                  if (data[`streetName${i}`]){
+                   streetArr.push(data[`streetName${i}`])
+                  }
+                }
+                if (streetArr.length > 0){
+                  let div = document.createElement(`div`);
+                  let list = document.createElement(`ul`);
+                  let para = document.createElement(`p`);
+                  for (let i = 0; i < streetArr.length; i++){
+                    list.appendChild(genItemClickable(streetArr[i]))
+                  }
+                  para.innerText = `That street doesn't seem to exist. Did you mean one of the below?`;
+                  div.classList.add(`err-list`);
+                  div.appendChild(para);
+                  div.appendChild(list);
+                  generateErr(`Street Not Found`, div, true);
+                }
+                break;
+              default:
+                break;
+            }
+          }
+        })
+    } else {
+      //
+    }
+  }, [state.tripAddress])
+
+  /* End Effect: Convert Destination to Lat/Lon */
 
   /* Start Effect: Animate Options Icon 
   Starts an animation for the options icon. Which animation depends on the current options value in state. Said property triggers this */
   useEffect(()=>{
-    let options = state.options;
     const icon = document.getElementById("options-icon");
     const panel = document.getElementById("options-panel");
-    if (!options) {
+    if (!state.options) {
         icon.classList.remove("iconOn");
         panel.classList.remove("panelOn");
         icon.classList.add("iconOff");
@@ -205,7 +530,27 @@ export default function App() {
         panel.classList.add("panelOn");
     }
   },[state.options])
-  /* End Effect: Animate Options Icon
+  /* End Effect: Animate Options Icon */
+
+  /* Start Effect: Error Modal Transition 
+  Runs when isModalError changes. If new value is true, it turns on the modal's visibility. If false, it turns it off.
+  */
+  useEffect(()=>{
+    let modal = document.getElementById(`modal-error`);
+    let modalBg = document.getElementById(`modal-bg`);
+      if (state.isModalError){
+        modal.classList.remove(`errorOff`);
+        modalBg.classList.remove(`errorOff`);
+        modal.classList.add(`errorOn`);
+        modalBg.classList.add(`errorOnBg`);
+      } else {
+        modal.classList.remove(`errorOn`);
+        modalBg.classList.remove(`errorOnBg`);
+        modal.classList.add(`errorOff`);
+        modalBg.classList.add(`errorOff`);
+      }
+    },[state.isModalError])
+  /* End Effect: Error Modal Transition */
   /* End: Effects */
 
   return (
@@ -236,12 +581,16 @@ export default function App() {
           css={css`
             position: absolute;
             width: 90vw;
-            left: 50vw;
+            left: 50%;
             transform: translateX(-50%);
           `}
         >
           <Logo />
-          <div>
+          <div
+            css={css`
+              text-align: center;
+            `}
+          >
             <div
               css={css`
                 font-size: ${fontSize[2]};
@@ -366,8 +715,8 @@ export default function App() {
                   label="search"
                   placeholder="Search"
                   value={state.searchQuery}
-                  onChange={(e) => dispatch({type: UPDATE_QUERY, payload: {searchQuery: e.target.value}})}
-                  id="search"
+                  onChange={(e) => updateInput(e, true)}
+                  id="searchQuery"
                   css={css`
                     box-sizing: border-box;
                     width: 100%;
@@ -521,9 +870,245 @@ export default function App() {
                 (state.filterDock ? "filterDockOn" : "filterDockOff")
               }
             >
-              {state.stations && state.stations.map((station) => (
+              {state.stations.length > 0 && state.stations.map((station) => (
                 <Station key={station.station_id} data={station} />
               ))}
+            </div>
+          </div>
+          <div
+            css={css`
+                display: ${dispTripElems};
+                button, input, select {
+                  width: 100%;
+                  font-family: ${inter}, ${fontFamily};
+                  font-weight: ${fontWeight["bold"]};
+                  font-size: ${fontSize[4]};
+                  line-height: ${fontSize[7]};
+                  position: relative;
+                  margin: ${space[3]} 0;
+                  border-radius: ${space[4]};
+                }
+                button, input {
+                  padding: 0 ${space[4]};
+                }
+                select {
+                  padding: ${space[3]} ${space[4]};
+                }
+                input {
+                  box-sizing: border-box;
+                  border: 1px solid #808080;
+                }
+                button {
+                  background-color: black;
+                  color: white;
+                  border: none;
+                }
+            `}
+          >
+            <input
+              type="text"
+              label="houseNumber"
+              placeholder="House Number"
+              id="tripHouseNumber"
+              value={state.tripHouseNumber}
+              onChange={(e) => updateInput(e)}              
+            />
+            <input
+              type="text"
+              label="street"
+              placeholder="Street"
+              id="tripStreet"
+              value={state.tripStreet}
+              onChange={(e) => updateInput(e)}              
+            />
+            <select
+              id="tripBorough"
+              onChange={(e) => updateInput(e)}
+            >
+              <option
+                value=""
+              >
+                Select Borough
+              </option>
+              <option
+                value="manhattan"
+              >
+                Manhattan
+              </option>
+              <option
+                value="brooklyn"
+              >
+                Brooklyn
+              </option>
+              <option
+                value="queens"
+              >
+                Queens
+              </option>
+              <option
+                value="bronx"
+              >
+                The Bronx
+              </option>
+              <option
+                value="staten island"
+              >
+                Staten Island
+              </option>
+            </select>
+            <button
+              onClick={(e) => searchDestAddr(e.value)}
+            >
+              Search
+            </button>
+          </div>
+          
+          <div
+            css={css`
+                display: ${dispTripElems};
+                button, input, select {
+                  width: 100%;
+                  font-family: ${inter}, ${fontFamily};
+                  font-weight: ${fontWeight["bold"]};
+                  font-size: ${fontSize[4]};
+                  line-height: ${fontSize[7]};
+                  position: relative;
+                  margin: ${space[3]} 0;
+                  border-radius: ${space[4]};
+                }
+                button, input {
+                  padding: 0 ${space[4]};
+                }
+                select {
+                  padding: ${space[3]} ${space[4]};
+                }
+                input {
+                  box-sizing: border-box;
+                  border: 1px solid #808080;
+                }
+                button {
+                  background-color: black;
+                  color: white;
+                  border: none;
+                }
+            `}
+          >
+            {state.tripStations.length > 0 &&
+              state.tripStations.slice(0,9).map((station) => (
+                <Station key={`dest-${station.station_id}`} data={station} />
+              ))
+            }
+          </div>
+        </div>
+        <div
+          css={css`
+            .errorOn {
+              display: block;
+              visibility: visible;
+              opacity: 1;
+            }
+            .errorOnBg {
+              display: block;
+              visibility: visible;
+              opacity: 0.25;
+            }
+            .errorOff {
+              diplay: none;
+              visibility: hidden;
+              opacity: 0;
+            }
+          `}
+        >
+          <div
+            css={css`
+              display: ${dispTripElems};
+            `}
+          >
+            <div
+              id="modal-bg"
+              css={css`
+                display: none;
+                position: absolute;
+                z-index: 200;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background-color: rgb(0, 0, 0);
+                transition: 0.25s ease-in-out;
+                opacity: 0;
+                visiblity: hidden;
+              `}
+              onClick={() => {dispatch({type: TOGGLE_FILTER, payload: { filterName: `isModalError`}})}}
+            >
+            </div>
+          </div>
+          <div
+            id="modal-error"
+            css={css`
+              display: ${dispTripElems};
+              position: absolute;
+              z-index: 201;
+              font-family: ${inter}, ${fontFamily};
+              border: 1px solid #808080;
+              background-color: white;
+              width: 80%;
+              left: 50vw;
+              top: 50vh;
+              transform: translate(-50%, -50%);
+              text-align: center;
+              opacity: 0;
+              visiblity: hidden;
+              h1 {
+                font-size: ${fontSize[6]};
+                font-weight: ${fontWeight.bold};
+                padding: ${space[1]} 0;
+              }
+              h2 {
+                font-size: ${fontSize[3]};
+                padding: ${space[1]} 0;
+              }
+              p {
+                font-size: ${fontSize[2]};
+                padding: ${space[1]} 0;
+              }
+              padding: ${space[2]};
+              .err-list {
+                ul {
+                  padding: 0;
+                  li {
+                    list-style-type: none;
+                    button {
+                      font-family: ${inter}, ${fontFamily};
+                      font-weight: ${fontWeight["bold"]};
+                      font-size: ${fontSize[2]};
+                      line-height: ${fontSize[2]};
+                      position: relative;
+                      margin: ${space[3]} 0;
+                      border-radius: ${space[4]};
+                      padding: ${space[3]} ${space[4]};
+                      background-color: black;
+                      color: white;
+                      border: none;
+                    }
+                  }
+                }
+              }
+              transition: 0.25s ease-in-out;
+            `}
+          >
+            <div
+              css={css`
+                font-family: ${inter}, ${fontFamily};
+                font-weight: ${fontWeight.light};
+                font-size: ${fontSize[2]};
+                position: absolute;
+                top: ${space[2]};
+                right: ${space[3]};
+              `}
+              onClick={() => {dispatch({type: TOGGLE_FILTER, payload: { filterName: `isModalError`}})}}
+            >
+              x
             </div>
           </div>
         </div>
