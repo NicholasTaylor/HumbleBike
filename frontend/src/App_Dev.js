@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer } from "react";
+import React, { useEffect, useReducer, useCallback } from "react";
 import { css, jsx } from "@emotion/react";
 
 import Logo from "./components/Logo";
@@ -16,7 +16,7 @@ import {
   fontWeight,
   space,
 } from "./constants/style";
-import { UPDATE_STATION_STATUS, GET_STATION_INFO, TOGGLE_FILTER, UPDATE_QUERY, UPDATE_SEARCH, UPDATE_TRIP_ERROR, UPDATE_TRIP_ADDR, UPDATE_LOCATION, UPDATE_ERROR, CORRECT_STREET } from "./constants/action-types";
+import { UPDATE_STATION_STATUS, GET_STATION_INFO, TOGGLE_FILTER,  UPDATE_LOCATION, UPDATE_VALUE } from "./constants/action-types";
 import { endpointInfo, endpointStatus, endpointAddress } from "./constants/endpoints";
 import { NYC_API } from "./constants/config";
 
@@ -48,15 +48,10 @@ export default function App() {
 
   const reducer = (state, action) => {
     switch (action.type) {
-      case CORRECT_STREET:
+      case UPDATE_VALUE:
         return {
           ...state,
-          tripStreet: action.payload.tripStreet
-        }
-      case UPDATE_TRIP_ADDR:
-        return {
-          ...state,
-          tripAddress: action.payload.tripAddress
+          [action.payload.fieldName]: action.payload.value
         }
       case UPDATE_LOCATION:
         const locType = action.payload.locType ? action.payload.locType : `default`;
@@ -70,21 +65,6 @@ export default function App() {
             ...state,
             location: action.payload.location
           }
-        }
-      case UPDATE_TRIP_ERROR:
-        return {
-          ...state,
-          tripError: action.payload.tripError
-        }
-      case UPDATE_SEARCH:
-        return {
-          ...state,
-          stations: action.payload.stations
-        }
-      case UPDATE_QUERY:
-        return {
-          ...state,
-          [action.payload.filterName]: action.payload.value
         }
       case TOGGLE_FILTER:
         let filterName = action.payload.filterName;
@@ -115,26 +95,6 @@ export default function App() {
   const dispViewElems = `${state['useTripPlanner'] ? `none`: `block`}`;
   const dispViewElemsFlex = `${state['useTripPlanner'] ? `none`: `flex`}`;
   const dispTripElems = `${state['useTripPlanner'] ? `block`: `none`}`;
-
-  /* Start: Error Boundary */
-  class ErrorBoundary extends React.Component {
-    constructor(props){
-      super(props);
-      this.state = { hasReactError: false};
-    }
-
-    static getDerivedStateFromError(reactError){
-      return { hasReactError: true };
-    }
-    
-    render(){
-      if (this.state.hasError){
-        return <h1>Error</h1>
-      }
-      return this.props.children
-    }
-  }
-  /* End: Error Boundary */
 
   /* Start: Helpers and Handles */
   const fetchDynamic = () =>{
@@ -174,7 +134,7 @@ export default function App() {
   const updateInput = (e, doUpdateStation = false) => {
     const updateQuery = new Promise((resolve) => {
       dispatch({
-        type: UPDATE_QUERY, 
+        type: UPDATE_VALUE, 
         payload: {
           filterName: e.target.id,
           value: e.target.value
@@ -207,9 +167,10 @@ export default function App() {
       { 
         if (visibleArr){
           dispatch({
-            type: UPDATE_SEARCH,
+            type: UPDATE_VALUE,
             payload: {
-              stations: visibleArr
+              fieldName: 'stations',
+              value: visibleArr
             }
           })
         }
@@ -256,16 +217,18 @@ export default function App() {
         output += `${validationErr}${newline}`;
       }
       dispatch({
-        type: UPDATE_TRIP_ERROR,
+        type: UPDATE_VALUE,
         payload: {
-          tripError: output
+          fieldName: 'tripError',
+          value: output
         }
       });
     } else {
       dispatch({
-        type: UPDATE_TRIP_ADDR,
+        type: UPDATE_VALUE,
         payload: {
-          tripAddress: {
+          fieldName: 'tripAddress',
+          value: {
             street: inputs[0].value,
             houseNumber: inputs[1].value,
             borough: inputs[2].value,
@@ -273,9 +236,10 @@ export default function App() {
         }
       })
       dispatch({
-        type: UPDATE_TRIP_ERROR,
+        type: UPDATE_VALUE,
         payload: {
-          tripError: null
+          fieldName: 'tripError',
+          value: null
         }
       })
     }
@@ -283,18 +247,20 @@ export default function App() {
 
   const onError = (error) => {
     dispatch({
-      type: UPDATE_ERROR,
+      type: UPDATE_VALUE,
       payload: {
-        error: error.message
+        fieldName: 'error',
+        value: error.message
       }
     })
   };
-  const onLocationChange = ({ coords }) => {
+  const onLocationChange =n ({ coords }) => {
     if (!coords) {
       dispatch({
-        type: UPDATE_ERROR,
+        type: UPDATE_VALUE,
         payload: {
-          error: `Location not available.`
+          fieldName: 'error',
+          value:  `Location not available.`
         }
       });
       return;
@@ -477,7 +443,7 @@ export default function App() {
                   str.split(' ')
                   btn.innerText = TitleCase(str);
                   btn.id =`street-correction`;
-                  btn.onclick = (e) => { dispatch({type: CORRECT_STREET, payload: {tripStreet: e.target.innerText}}); dispatch({type: TOGGLE_FILTER, payload: {filterName: `isModalError`}}) };
+                  btn.onclick = (e) => { dispatch({type: UPDATE_VALUE, payload: {fieldName: 'tripStreet', value: e.target.innerText}}); dispatch({type: TOGGLE_FILTER, payload: {filterName: `isModalError`}}) };
                   item.appendChild(btn);
                   return item;
                 }
