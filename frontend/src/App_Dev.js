@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useCallback } from "react";
+import { useEffect, useReducer, useCallback } from "react";
 import { css, jsx } from "@emotion/react";
 
 import Logo from "./components/Logo";
@@ -16,7 +16,7 @@ import {
   fontWeight,
   space,
 } from "./constants/style";
-import { UPDATE_STATION_STATUS, GET_STATION_INFO, TOGGLE_FILTER,  UPDATE_LOCATION, UPDATE_VALUE } from "./constants/action-types";
+import { UPDATE_STATION_STATUS, UPDATE_STATION_DIST, GET_STATION_INFO, TOGGLE_FILTER,  UPDATE_LOCATION, UPDATE_VALUE } from "./constants/action-types";
 import { endpointInfo, endpointStatus, endpointAddress } from "./constants/endpoints";
 import { NYC_API } from "./constants/config";
 
@@ -27,6 +27,7 @@ export default function App() {
   const initialState = {
     stationInfo: {},
     stations: [],
+    locationLive: {},
     location: {},
     lastUpdated: new Date().toLocaleString(),
     useTripPlanner: false,
@@ -61,11 +62,25 @@ export default function App() {
             tripLocation: action.payload.tripLocation
           }
         } else {
-          return {
-            ...state,
-            location: action.payload.location
+          const locationLive = action.payload.location;
+          const location = { ...state.location };
+          const error = { ...state.error };
+          const minDist = 0.0075;
+          const locDelta = Haversine(
+            location.latitude,
+            location.longitude,
+            locationLive.latitude,
+            locationLive.longitude,
+            5
+          );
+          if (locDelta > minDist || error || isNaN(locDelta)) {
+            return {
+              ...state,
+              location: locationLive
+            }
           }
         }
+        break;
       case TOGGLE_FILTER:
         let filterName = action.payload.filterName;
         if (filterName){
@@ -81,10 +96,32 @@ export default function App() {
           stationInfo: action.payload
         }
       case UPDATE_STATION_STATUS:
-        return {
-          ...state,
-          stations: action.payload.stations,
-          lastUpdated: action.payload.lastUpdated
+        if (Object.keys(state.stationInfo).length > 0){
+          return {
+            ...state,
+            stations: action.payload.stations,
+            lastUpdated: action.payload.lastUpdated
+          } 
+        } else {
+          return {
+            ...state
+          }
+        }      
+      case UPDATE_STATION_DIST:
+        const stationList = [ ...state.stations ];
+        if (state.location && stationList && !state.error) {
+          console.log(`Scenario A`);
+          console.log(`Lat: ${state.location.latitude}\nLon: ${state.location.longitude}\nStation List Size: ${Object.keys(stationList).length}`)
+          return {
+            ...state,
+            stations: SortStations(UpdateDistance(state.location.latitude, state.location.longitude, stationList), true)
+          }
+        } else {
+          console.log(`Scenario B`);
+          return {
+            ...state,
+            stations: SortStations(stationList, false)
+          }
         }
       default:
     }
@@ -97,7 +134,8 @@ export default function App() {
   const dispTripElems = `${state['useTripPlanner'] ? `block`: `none`}`;
 
   /* Start: Helpers and Handles */
-  const fetchDynamic = () =>{
+
+  const getStationStatus = useCallback(() => {
     FetchData(endpointStatus)
     .then((response) => {
       const stationMap = { ...state.stationInfo }
@@ -118,25 +156,33 @@ export default function App() {
           stations.push(target);
         }
       }
-      return {
-        stations: stations,
-        lastUpdated: new Date().toLocaleString()
-      }     
+      return [
+        stations, new Date().toLocaleString()
+      ]     
     })
     .then((payload) => {
+      const [stations, lastUpdated] = payload;
       dispatch({
         type: UPDATE_STATION_STATUS,
-        payload: payload
+        payload: {
+          stations: stations,
+          lastUpdated: lastUpdated
+        }
       })
     })
-  }
+    .then(()=>{
+      dispatch({
+        type: UPDATE_STATION_DIST
+      }) 
+    })
+  },[state.stationInfo]) 
 
   const updateInput = (e, doUpdateStation = false) => {
     const updateQuery = new Promise((resolve) => {
       dispatch({
         type: UPDATE_VALUE, 
         payload: {
-          filterName: e.target.id,
+          fieldName: e.target.id,
           value: e.target.value
         }
       });
@@ -245,49 +291,6 @@ export default function App() {
     }
   };
 
-  const onError = (error) => {
-    dispatch({
-      type: UPDATE_VALUE,
-      payload: {
-        fieldName: 'error',
-        value: error.message
-      }
-    })
-  };
-  const onLocationChange =n ({ coords }) => {
-    if (!coords) {
-      dispatch({
-        type: UPDATE_VALUE,
-        payload: {
-          fieldName: 'error',
-          value:  `Location not available.`
-        }
-      });
-      return;
-    }
-    const location = { ...state.location }
-    const error = { ...state.error }
-    const minDist = 0.0075;
-    const locDelta = Haversine(
-      location.latitude,
-      location.longitude,
-      coords.latitude,
-      coords.longitude,
-      5
-    );
-    if (locDelta > minDist || error || isNaN(locDelta)) {
-      dispatch({
-        type: UPDATE_LOCATION,
-        payload: {
-          locType: `default`,
-          location:  {
-              latitude: coords.latitude,
-              longitude: coords.longitude
-          }
-        }
-      });
-    }
-  };
   /* End: Helpers and Handles */
 
   /* Start: Effects */
@@ -316,6 +319,40 @@ export default function App() {
         })
       });
       const geo = navigator.geolocation;
+
+      const onError = (error) => {
+        dispatch({
+          type: UPDATE_VALUE,
+          payload: {
+            fieldName: 'error',
+            value: error.message
+          }
+        })
+      };
+      const onLocationChange = ({ coords }) => {
+        if (!coords) {
+          dispatch({
+            type: UPDATE_VALUE,
+            payload: {
+              fieldName: 'error',
+              value:  `Location not available.`
+            }
+          });
+          return;
+        } else {
+          dispatch({
+            type: UPDATE_VALUE,
+            payload: {
+              fieldName: 'locationLive',
+              value: {
+                latitude: coords.latitude,
+                longitude: coords.longitude
+              }
+            }
+          })
+        }
+      };
+
       const update = geo.watchPosition(onLocationChange, onError);
       return () => {
         geo.clearWatch(update);
@@ -323,38 +360,34 @@ export default function App() {
   },[])
   /* End Effect: Fetch initial data */
 
+  /* Start Effect: Update Location */
+  useEffect(() => {
+    dispatch({
+      type: UPDATE_LOCATION,
+      payload: {
+        locType: `default`,
+        location:  {
+            latitude: state.locationLive.latitude,
+            longitude: state.locationLive.longitude
+        }
+      }
+    })
+  },[state.locationLive]);
+  /* End Effect: Update Location */
+
   /* Start Effect: Fetch dynamic station data
   Fetches and updates dynamic, changing station data - like bike and dock availability */
   useEffect(()=>{
-    fetchDynamic();
-  },[state.stationInfo])
+    getStationStatus();
+  },[getStationStatus])
   /* End Effect: Fetch dynamic station data */
 
   /* Start Effect: Update Distance to Stations 
   Updates "dist" property in every station whenever user's location changes */
   useEffect(() => {
-    const updateStationDist = new Promise((resolve) => {
-      const stationList = { ...state.stations }
-      if (state.location && stationList && !state.error) {
-        resolve(SortStations(
-          UpdateDistance(state.location.latitude, state.location.longitude, stationList),
-          true
-        ));
-      } else {
-        resolve(SortStations(stationList, false));
-      }
-    })
-    updateStationDist
-      .then((newStations) => {
-        dispatch({
-          type: UPDATE_STATION_STATUS,
-          payload: {
-            stations: newStations,
-            lastUpdated: state.lastUpdated
-          }
-        })
-      });
-    
+    dispatch({
+      type: UPDATE_STATION_DIST
+    })    
   },[state.location, state.error])
   /* End Effect: Update Distance to Station */
 
@@ -649,7 +682,7 @@ export default function App() {
                     border-radius: ${space[4]};
                     background-color: transparent;
                   `}
-                  onClick={()=> fetchDynamic()}
+                  onClick={()=> {getStationStatus()}}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
