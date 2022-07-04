@@ -16,7 +16,7 @@ import {
   fontWeight,
   space,
 } from "./constants/style";
-import { UPDATE_STATION_STATUS, UPDATE_STATION_DIST, GET_STATION_INFO, TOGGLE_FILTER,  UPDATE_LOCATION, UPDATE_VALUE } from "./constants/action-types";
+import { UPDATE_STATION_STATUS, UPDATE_STATION_DIST, GET_STATION_INFO, TOGGLE_FILTER,  UPDATE_LOCATION, UPDATE_VALUE, UPDATE_TRIP_STATIONS } from "./constants/action-types";
 import { endpointInfo, endpointStatus, endpointAddress } from "./constants/endpoints";
 import { NYC_API } from "./constants/config";
 
@@ -81,6 +81,17 @@ export default function App() {
           }
         }
         break;
+      case UPDATE_TRIP_STATIONS:
+        if (Object.keys(state.tripLocation).length > 0 && state.tripStations.length > 0){
+          return {
+            ...state,
+            tripStations: SortStations(UpdateDistance(state.tripLocation.latitude, state.tripLocation.longitude, state.tripStations), true)
+          }
+        } else {
+          return {
+            ...state
+          }
+        }
       case TOGGLE_FILTER:
         let filterName = action.payload.filterName;
         if (filterName){
@@ -96,7 +107,16 @@ export default function App() {
           stationInfo: action.payload
         }
       case UPDATE_STATION_STATUS:
-        if (Object.keys(state.stationInfo).length > 0){
+        let infoLen = Object.keys(state.stationInfo).length;
+        let tripStationsLen = state.tripStations.length;
+        if (infoLen > 0 && tripStationsLen === 0){
+          return {
+            ...state,
+            stations: action.payload.stations,
+            tripStations: action.payload.stations,
+            lastUpdated: action.payload.lastUpdated
+          } 
+        } else if (infoLen > 0){
           return {
             ...state,
             stations: action.payload.stations,
@@ -110,14 +130,11 @@ export default function App() {
       case UPDATE_STATION_DIST:
         const stationList = [ ...state.stations ];
         if (state.location && stationList && !state.error) {
-          console.log(`Scenario A`);
-          console.log(`Lat: ${state.location.latitude}\nLon: ${state.location.longitude}\nStation List Size: ${Object.keys(stationList).length}`)
           return {
             ...state,
             stations: SortStations(UpdateDistance(state.location.latitude, state.location.longitude, stationList), true)
           }
         } else {
-          console.log(`Scenario B`);
           return {
             ...state,
             stations: SortStations(stationList, false)
@@ -550,6 +567,16 @@ export default function App() {
       }
     },[state.isModalError])
   /* End Effect: Error Modal Transition */
+
+  /* Start Effect: Update Distance from Destination */
+  useEffect(() => {
+    if (Object.keys(state.tripLocation).length > 0){
+      dispatch({
+        type: UPDATE_TRIP_STATIONS
+      })
+    }
+  },[state.tripLocation])
+  /* End Effect: Update Distance from Destination */
   /* End: Effects */
 
   return (
@@ -992,7 +1019,7 @@ export default function App() {
                 }
             `}
           >
-            {state.tripStations.length > 0 &&
+            {state.tripStations.length > 0 && Object.keys(state.tripLocation).length > 0 &&
               state.tripStations.slice(0,9).map((station) => (
                 <Station key={`dest-${station.station_id}`} data={station} />
               ))
