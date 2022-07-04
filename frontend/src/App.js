@@ -45,13 +45,11 @@ export default function App() {
   const reducer = (state, action) => {
     switch (action.type) {
       case UPDATE_VALUE:
-        console.log(`This fired. Type: ${action.type}`)
         return {
           ...state,
           [action.payload.fieldName]: action.payload.value
         }
       case UPDATE_LOCATION:
-        console.log(`This fired. Type: ${action.type}`)
         const locType = action.payload.locType ? action.payload.locType : `default`;
         if (locType === `trip`){
           return {
@@ -79,7 +77,6 @@ export default function App() {
         }
         break;
       case UPDATE_TRIP_STATIONS:
-        console.log(`This fired. Type: ${action.type}`)
         if (Object.keys(state.tripLocation).length > 0 && state.tripStations.length > 0){
           return {
             ...state,
@@ -91,7 +88,6 @@ export default function App() {
           }
         }
       case TOGGLE_FILTER:
-        console.log(`This fired. Type: ${action.type}`)
         let filterName = action.payload.filterName;
         if (filterName){
           return {
@@ -101,20 +97,18 @@ export default function App() {
         }
         break;
       case GET_STATION_INFO:
-        console.log(`This fired. Type: ${action.type}`)
         return {
           ...state,
           stationInfo: action.payload
         }
       case UPDATE_STATION_STATUS:
-        console.log(`This fired. Type: ${action.type}`)
         let infoLen = Object.keys(state.stationInfo).length;
         let tripStationsLen = state.tripStations.length;
         if (infoLen > 0 && tripStationsLen === 0){
           return {
             ...state,
             stations: action.payload.stations,
-            tripStations: action.payload.stations,
+            tripStations: [ ...action.payload.stations ],
             lastUpdated: action.payload.lastUpdated
           } 
         } else if (infoLen > 0){
@@ -129,7 +123,6 @@ export default function App() {
           }
         }      
       case UPDATE_STATION_DIST:
-        console.log(`This fired. Type: ${action.type}`)
         const stationList = [ ...state.stations ];
         if (state.location && stationList && !state.error) {
           return {
