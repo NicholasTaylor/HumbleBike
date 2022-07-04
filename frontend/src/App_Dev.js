@@ -3,19 +3,14 @@ import { css, jsx } from "@emotion/react";
 
 import Logo from "./components/Logo";
 import CustomFonts from "./components/Fonts";
-import Haversine from "./components/Haversine";
-import FetchData from "./components/FetchData";
 import Station from "./components/Station";
-import UpdateDistance from "./components/UpdateDistance";
-import SortStations from "./components/SortStations";
 
-import {
-  fontFamily,
-  inter,
-  fontSize,
-  fontWeight,
-  space,
-} from "./constants/style";
+import Haversine from "./functions/Haversine";
+import FetchData from "./functions/FetchData";
+import UpdateDistance from "./functions/UpdateDistance";
+import SortStations from "./functions/SortStations";
+
+import { fontFamily, inter, fontSize, fontWeight, space } from "./constants/style";
 import { UPDATE_STATION_STATUS, UPDATE_STATION_DIST, GET_STATION_INFO, TOGGLE_FILTER,  UPDATE_LOCATION, UPDATE_VALUE, UPDATE_TRIP_STATIONS } from "./constants/action-types";
 import { endpointInfo, endpointStatus, endpointAddress } from "./constants/endpoints";
 import { NYC_API } from "./constants/config";
