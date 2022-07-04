@@ -1,156 +1,255 @@
-import { useState, useEffect, useCallback } from "react";
-import FetchData from "./components/FetchData";
-import UpdateDistance from "./components/UpdateDistance";
-import Station from "./components/Station";
-import SortStations from "./components/SortStations";
+import { useEffect, useReducer, useCallback } from "react";
+import { css, jsx } from "@emotion/react";
+
 import Logo from "./components/Logo";
 import CustomFonts from "./components/Fonts";
-import Haversine from "./components/Haversine";
-import {
-  fontFamily,
-  inter,
-  fontSize,
-  fontWeight,
-  space,
-} from "./constants/style";
-import { css, jsx } from "@emotion/react";
+import Station from "./components/Station";
+
+import Haversine from "./functions/Haversine";
+import FetchData from "./functions/FetchData";
+import UpdateDistance from "./functions/UpdateDistance";
+import SortStations from "./functions/SortStations";
+
+import { fontFamily, inter, fontSize, fontWeight, space } from "./constants/style";
+import { UPDATE_STATION_STATUS, UPDATE_STATION_DIST, GET_STATION_INFO, TOGGLE_FILTER,  UPDATE_LOCATION, UPDATE_VALUE, UPDATE_TRIP_STATIONS } from "./constants/action-types";
+import { endpointInfo, endpointStatus, endpointAddress } from "./constants/endpoints";
 import { NYC_API } from "./constants/config";
+
 /** @jsxRuntime classic */
-/** @jsx jsx */ export default function App() {
-  const [location, setLocation] = useState({});
-  const [error, setError] = useState(null);
-  const [stationInfo, setStationInfo] = useState({});
-  const [stations, setStations] = useState([]);
-  const [stationsDest, setStationsDest] = useState([])
-  const [timedRefresh, setTimedRefresh] = useState(0);
-  const [manualRefresh, setManualRefresh] = useState(0);
-  const [lastUpdated, setLastUpdated] = useState(new Date().toLocaleString());
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterElec, setFilterElec] = useState(false);
-  const [filterElecFree, setFilterElecFree] = useState(false);
-  const [filterDock, setFilterDock] = useState(false);
-  const [options, setOptions] = useState(false);
-  const [useTripPlanner, setUseTripPlanner] = useState(false);
-  const [searchClicks, setSearchClicks] = useState(0);
-  const [address, setAddress] = useState({});
-  const [inputErrors, setInputErrors] = useState(null);
-  const [street, setStreet] = useState('');
-  const [houseNumber, setHouseNumber] = useState('');
-  const [borough, setBorough] = useState('');
-  const [isModalError, setIsModalError] = useState(true);
-  const [destLocation, setDestLocation] = useState(false);
+/** @jsx jsx */
 
-  const endpointInfo =
-    "https://gbfs.citibikenyc.com/gbfs/en/station_information.json";
-  const endpointStatus =
-    "https://gbfs.citibikenyc.com/gbfs/en/station_status.json";
-  const endpointAddress = "https://api.nyc.gov/geo/geoclient/v1/address.json";
-  const dispViewElems = `${useTripPlanner ? `none`: `block`}`;
-  const dispViewElemsFlex = `${useTripPlanner ? `none`: `flex`}`;
-  const dispTripElems = `${useTripPlanner ? `block`: `none`}`;
-
-  /* Start: Click Handlers and Toggles */
-  const handleClick = () => {
-    setManualRefresh(manualRefresh + 1);
+export default function App() {
+  const initialState = {
+    stationInfo: {},
+    stations: [],
+    locationLive: {},
+    location: {},
+    lastUpdated: new Date().toLocaleString(),
+    useTripPlanner: false,
+    options: false,
+    filterElec: false,
+    filterElecFree: false,
+    filterDock: false,
+    searchQuery: ``,
+    error: null,
+    tripHouseNumber: ``,
+    tripStreet: ``,
+    tripBorough: ``,
+    tripAddress: {},
+    tripLocation: {},
+    tripStations: [],
+    tripError: null,
+    isModalError: false
   }
 
-  const handleClickTrip = () => {
-      setUseTripPlanner(!useTripPlanner);
-  };
-
-  const handleClickError = () => {
-    setIsModalError(false);
-  }
-
-  const toggleElec = () => {
-    setFilterElec(!filterElec);
-  };
-
-  const toggleDock = () => {
-    setFilterDock(!filterDock);
-  };
-
-  const toggleElecFree = () => {
-    setFilterElecFree(!filterElecFree);
-  };
-
-  const toggleOptions = () => {
-    const animateOptions = new Promise((resolve, reject) => {
-      const icon = document.getElementById("options-icon");
-      const panel = document.getElementById("options-panel");
-      if (options) {
-        icon.classList.remove("iconOn");
-        panel.classList.remove("panelOn");
-        icon.classList.add("iconOff");
-        panel.classList.add("panelOff");
-      } else {
-        icon.classList.remove("iconOff");
-        panel.classList.remove("panelOff");
-        icon.classList.add("iconOn");
-        panel.classList.add("panelOn");
-      }
-      resolve(true);
-    });
-    animateOptions.then(setOptions(!options));
-  };
-  /*End: Click Handlers and Toggles */
-
-  /*Start: Callbacks */
-  const updateInput = useCallback((e) => {
-    e.preventDefault();
-    if (e === undefined) {
-      return;
-    }
-    let newVal = e.target.value;
-    switch(e.target.id){
-      case 'street':
-        setStreet(newVal);
+  const reducer = (state, action) => {
+    switch (action.type) {
+      case UPDATE_VALUE:
+        return {
+          ...state,
+          [action.payload.fieldName]: action.payload.value
+        }
+      case UPDATE_LOCATION:
+        const locType = action.payload.locType ? action.payload.locType : `default`;
+        if (locType === `trip`){
+          return {
+            ...state,
+            tripLocation: action.payload.tripLocation
+          }
+        } else {
+          const locationLive = action.payload.location;
+          const location = { ...state.location };
+          const error = { ...state.error };
+          const minDist = 0.0075;
+          const locDelta = Haversine(
+            location.latitude,
+            location.longitude,
+            locationLive.latitude,
+            locationLive.longitude,
+            5
+          );
+          if (locDelta > minDist || error || isNaN(locDelta)) {
+            return {
+              ...state,
+              location: locationLive
+            }
+          }
+        }
         break;
-      case 'street-correction':
-        setStreet(e.target.innerText);
-        handleClickError();
+      case UPDATE_TRIP_STATIONS:
+        if (Object.keys(state.tripLocation).length > 0 && state.tripStations.length > 0){
+          return {
+            ...state,
+            tripStations: SortStations(UpdateDistance(state.tripLocation.latitude, state.tripLocation.longitude, state.tripStations), true)
+          }
+        } else {
+          return {
+            ...state
+          }
+        }
+      case TOGGLE_FILTER:
+        let filterName = action.payload.filterName;
+        if (filterName){
+          return {
+            ...state,
+            [filterName] : !(state[filterName])
+          }
+        }
         break;
-      case 'houseNumber':
-        setHouseNumber(newVal);
-        break;
-      case 'borough':
-        setBorough(newVal);
-        break;
-      case 'search':
-        setSearchQuery(newVal);
-        break;
+      case GET_STATION_INFO:
+        return {
+          ...state,
+          stationInfo: action.payload
+        }
+      case UPDATE_STATION_STATUS:
+        let infoLen = Object.keys(state.stationInfo).length;
+        let tripStationsLen = state.tripStations.length;
+        if (infoLen > 0 && tripStationsLen === 0){
+          console.log(`This fired.`)
+          return {
+            ...state,
+            stations: action.payload.stations,
+            tripStations: action.payload.stations,
+            lastUpdated: action.payload.lastUpdated
+          } 
+        } else if (infoLen > 0){
+          return {
+            ...state,
+            stations: action.payload.stations,
+            lastUpdated: action.payload.lastUpdated
+          } 
+        } else {
+          return {
+            ...state
+          }
+        }      
+      case UPDATE_STATION_DIST:
+        const stationList = [ ...state.stations ];
+        if (state.location && stationList && !state.error) {
+          return {
+            ...state,
+            stations: SortStations(UpdateDistance(state.location.latitude, state.location.longitude, stationList), true)
+          }
+        } else {
+          return {
+            ...state,
+            stations: SortStations(stationList, false)
+          }
+        }
       default:
-        break;
     }
-  }, []);
+  }
 
-  const updateStationDist = useCallback(
-    (stationList) => {
-      if (location && stationList && !error) {
-        return SortStations(
-          UpdateDistance(location.latitude, location.longitude, stationList),
-          true
-        );
-      } else {
-        return SortStations(stationList, false);
+  const [state, dispatch]  = useReducer(reducer, initialState);
+  
+  const dispViewElems = `${state['useTripPlanner'] ? `none`: `block`}`;
+  const dispViewElemsFlex = `${state['useTripPlanner'] ? `none`: `flex`}`;
+  const dispTripElems = `${state['useTripPlanner'] ? `block`: `none`}`;
+
+  /* Start: Helpers and Handles */
+
+  const getStationStatus = useCallback(() => {
+    FetchData(endpointStatus)
+    .then((response) => {
+      const stationMap = { ...state.stationInfo }
+      const allStationStatus = response.data.stations;
+      const stations = [];
+      for (let status_idx = 0; status_idx < allStationStatus.length; status_idx++) {
+        let station = allStationStatus[status_idx];
+        let target = stationMap[station.station_id];
+        if (target) {
+          const statusData = {
+            classic:
+              station.num_bikes_available - station.num_ebikes_available,
+            electric: station.num_ebikes_available,
+            docks: station.num_docks_available,
+            isVisible: true,
+          };
+          Object.assign(target, statusData);
+          stations.push(target);
+        }
       }
-    },
-    [error, location]
-  );
+      return [
+        stations, new Date().toLocaleString()
+      ]     
+    })
+    .then((payload) => {
+      const [stations, lastUpdated] = payload;
+      dispatch({
+        type: UPDATE_STATION_STATUS,
+        payload: {
+          stations: stations,
+          lastUpdated: lastUpdated
+        }
+      })
+    })
+    .then(()=>{
+      dispatch({
+        type: UPDATE_STATION_DIST
+      }) 
+    })
+  },[state.stationInfo]) 
+
+  const updateInput = (e, doUpdateStation = false) => {
+    const updateQuery = new Promise((resolve) => {
+      dispatch({
+        type: UPDATE_VALUE, 
+        payload: {
+          fieldName: e.target.id,
+          value: e.target.value
+        }
+      });
+      resolve(true);
+    })
+    updateQuery
+    .then(() => {
+      const blankQuery = state.searchQuery.length === 0 ? true : false;
+      if (blankQuery || !doUpdateStation){
+        return null;
+      }
+      const stationCopy = [ ...state.stations ];
+      for (let station in stationCopy) {
+        const target = stationCopy[station];
+        const source = {
+          name: target.name,
+          isVisible:
+            blankQuery ||
+            state.searchQuery.toLowerCase().split(' ').reduce((acc, cur) => {return acc === true && target.name.toLowerCase().indexOf(cur) !== -1 ? true : false}, true)
+              ? true
+              : false,
+        };
+        Object.assign(target, source);
+      }
+      return stationCopy;
+    })
+    .then( (visibleArr) =>
+      { 
+        if (visibleArr){
+          dispatch({
+            type: UPDATE_VALUE,
+            payload: {
+              fieldName: 'stations',
+              value: visibleArr
+            }
+          })
+        }
+      }
+    )
+  }
 
   const searchDestAddr = () => {
     const inputs = [
       {
         name: `street`,
-        value: street,
+        value: state.tripStreet,
       },
       {
         name: `houseNumber`,
-        value: houseNumber,
+        value: state.tripHouseNumber,
       },
       {
         name: `borough`,
-        value: borough,
+        value: state.tripBorough,
       },
     ];
     const validationErrs = [];
@@ -176,153 +275,141 @@ import { NYC_API } from "./constants/config";
         let newline = i === validationErrs - 1 ? `<br />` : ``;
         output += `${validationErr}${newline}`;
       }
-      setInputErrors(output);
-    } else {
-      setAddress({
-        street: inputs[0].value,
-        houseNumber: inputs[1].value,
-        borough: inputs[2].value,
+      dispatch({
+        type: UPDATE_VALUE,
+        payload: {
+          fieldName: 'tripError',
+          value: output
+        }
       });
-      setInputErrors(null);
-      setSearchClicks(searchClicks+ 1)
+    } else {
+      dispatch({
+        type: UPDATE_VALUE,
+        payload: {
+          fieldName: 'tripAddress',
+          value: {
+            street: inputs[0].value,
+            houseNumber: inputs[1].value,
+            borough: inputs[2].value,
+          }
+        }
+      })
+      dispatch({
+        type: UPDATE_VALUE,
+        payload: {
+          fieldName: 'tripError',
+          value: null
+        }
+      })
     }
   };
 
-  const getStationInfo = useCallback(() => {
-    if (Object.keys(stationInfo).length === 0) {
-      FetchData(endpointInfo).then((response) => {
-        const allStationInfo = response.data.stations;
-        const stationMap = {};
-        for (let info_idx = 0; info_idx < allStationInfo.length; info_idx++) {
-          let station = allStationInfo[info_idx];
-          stationMap[station.station_id] = {
-            station_id: station.station_id,
-            lat: station.lat,
-            lon: station.lon,
-            name: station.name,
-          };
-        }
-        setStationInfo(stationMap);
-      });
-    }
-    return stationInfo;
-  }, [stationInfo]);
-  /*End: Callbacks */
+  /* End: Helpers and Handles */
 
-  /* Start Effect: Fetch Citi Bike data
-  Fetches the most up-to-date data from Citi Bike's servers. */
-  useEffect(() => {
-    const autoRefresh = setInterval(() => {
-      setTimedRefresh(timedRefresh + 1);
-    }, 10000);
-
-    const requestDataLoad = () => {
-      Promise.all([getStationInfo(), FetchData(endpointStatus)]).then(
-        (results) => {
-          const stationMap = results[0];
-          const allStationStatus = results[1].data.stations;
-          const payload = [];
-
-          for (
-            let status_idx = 0;
-            status_idx < allStationStatus.length;
-            status_idx++
-          ) {
-            let station = allStationStatus[status_idx];
-            let target = stationMap[station.station_id];
-            if (target) {
-              const statusData = {
-                classic:
-                  station.num_bikes_available - station.num_ebikes_available,
-                electric: station.num_ebikes_available,
-                docks: station.num_docks_available,
-                isVisible: true,
+  /* Start: Effects */
+  /* Start Effect: Fetch initial data
+  Fetches and populates static station data (name, coordinates) and the user's geolocation coordinates (if possible). Should only run once per session. */
+  useEffect(()=>{
+    FetchData(endpointInfo)
+      .then((response) => {
+          const allStationInfo = response.data.stations;
+          const stationMap = {};
+          for (let info_idx = 0; info_idx < allStationInfo.length; info_idx++) {
+              let station = allStationInfo[info_idx];
+              stationMap[station.station_id] = {
+                  station_id: station.station_id,
+                  lat: station.lat,
+                  lon: station.lon,
+                  name: station.name,
               };
-              Object.assign(target, statusData);
-              payload.push(target);
-            }
           }
-          if (stationsDest.length === 0){
-            setStationsDest(payload);
+          return stationMap;
+      })
+      .then((stationMap) => {
+        dispatch({
+          type: GET_STATION_INFO,
+          payload: stationMap
+        })
+      });
+      const geo = navigator.geolocation;
+
+      const onError = (error) => {
+        dispatch({
+          type: UPDATE_VALUE,
+          payload: {
+            fieldName: 'error',
+            value: error.message
           }
-          setStations(updateStationDist(payload));
-          setLastUpdated(new Date().toLocaleString());
-        }
-      );
-    };
-
-    requestDataLoad();
-
-    return () => {
-      clearInterval(autoRefresh);
-    };
-  }, [timedRefresh, manualRefresh, error, getStationInfo, updateStationDist]);
-  /* End Effect: Fetch Citi Bike data */
-
-  /* Start Effect: Fetch geolocation data
-  Gets/updates user's location in lat/lon computes distance to all docks based on current geo data. Fires on regular intervals. */
-  useEffect(() => {
-    const geo = navigator.geolocation;
-
-    const onError = (error) => {
-      setError(error.message);
-    };
-
-    const onLocationChange = ({ coords }) => {
-      if (!geo) {
-        setError("Location not available.");
-        return;
-      }
-      const minDist = 0.0075;
-      const locDelta = Haversine(
-        location.latitude,
-        location.longitude,
-        coords.latitude,
-        coords.longitude,
-        5
-      );
-      if (locDelta > minDist || error || isNaN(locDelta)) {
-        setLocation({
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-        });
-      }
-    };
-
-    const update = geo.watchPosition(onLocationChange, onError);
-    setStations((s) => updateStationDist({ ...s }));
-
-    return () => {
-      geo.clearWatch(update);
-    };
-  }, [location, error, updateStationDist]);
-  /* End Effect: Fetch geolocation data*/
-
-  /* Start Effect: Update search results
-  Toggles visibility for stations based on search query; fires whenever query or stations have been changed*/
-  useEffect(() => {
-    const blankQuery = searchQuery.length === 0 ? true : false;
-    const stationCopy = { ...stations };
-    for (let station in stationCopy) {
-      const target = stationCopy[station];
-      const source = {
-        name: target.name,
-        isVisible:
-          blankQuery ||
-          searchQuery.toLowerCase().split(' ').reduce((acc, cur) => {return acc === true && target.name.toLowerCase().indexOf(cur) !== -1 ? true : false}, true)
-            ? true
-            : false,
+        })
       };
-      Object.assign(target, source);
-    }
-  }, [searchQuery, stations]);
-  /* End Effect: Update search results */
+      const onLocationChange = ({ coords }) => {
+        if (!coords) {
+          dispatch({
+            type: UPDATE_VALUE,
+            payload: {
+              fieldName: 'error',
+              value:  `Location not available.`
+            }
+          });
+          return;
+        } else {
+          dispatch({
+            type: UPDATE_VALUE,
+            payload: {
+              fieldName: 'locationLive',
+              value: {
+                latitude: coords.latitude,
+                longitude: coords.longitude
+              }
+            }
+          })
+        }
+      };
+
+      const update = geo.watchPosition(onLocationChange, onError);
+      return () => {
+        geo.clearWatch(update);
+      };
+  },[])
+  /* End Effect: Fetch initial data */
+
+  /* Start Effect: Update Location */
+  useEffect(() => {
+    dispatch({
+      type: UPDATE_LOCATION,
+      payload: {
+        locType: `default`,
+        location:  {
+            latitude: state.locationLive.latitude,
+            longitude: state.locationLive.longitude
+        }
+      }
+    })
+  },[state.locationLive]);
+  /* End Effect: Update Location */
+
+  /* Start Effect: Fetch dynamic station data
+  Fetches and updates dynamic, changing station data - like bike and dock availability */
+  useEffect(()=>{
+    getStationStatus();
+  },[getStationStatus])
+  /* End Effect: Fetch dynamic station data */
+
+  /* Start Effect: Update Distance to Stations 
+  Updates "dist" property in every station whenever user's location changes */
+  useEffect(() => {
+    dispatch({
+      type: UPDATE_STATION_DIST
+    })    
+  },[state.location, state.error])
+  /* End Effect: Update Distance to Station */
 
   /* Start Effect: Convert Destination to Lat/Lon
   Searches an NYC government API for the address the user provided. If it exists, it'll return coordinates. If it doesn't, it'll return an array of addresses the API suspects the user actually means.
   */
 
   useEffect(() => {
+    const address = { ...state.tripAddress }
     const uri = `${endpointAddress}?street=${address.street}&houseNumber=${address.houseNumber}&borough=${address.borough}`;
 
     const generateErr = (headTxt, copyTxt, isCustom = false) => {
@@ -351,7 +438,7 @@ import { NYC_API } from "./constants/config";
       modal.appendChild(headline);
       modal.appendChild(subhead);
       modal.appendChild(copy);
-      setIsModalError(true);
+      dispatch({type: TOGGLE_FILTER, payload: {filterName: `isModalError`}});
       return;
     }
 
@@ -367,7 +454,16 @@ import { NYC_API } from "./constants/config";
           let data = json.address;
           let successCodes = ['00', '01'];
           if (successCodes.includes(data.geosupportReturnCode)){
-            setDestLocation({'latitude': data.latitude, 'longitude': data.longitude})
+            dispatch({
+              type:UPDATE_LOCATION, 
+              payload: {
+                locType: `trip`, 
+                tripLocation: {
+                  latitude: data.latitude, 
+                  longitude: data.longitude
+                }
+              }
+            })
           } else {
             switch (data.geosupportReturnCode) {
               case '42':
@@ -393,7 +489,7 @@ import { NYC_API } from "./constants/config";
                   str.split(' ')
                   btn.innerText = TitleCase(str);
                   btn.id =`street-correction`;
-                  btn.onclick = (e) => updateInput(e);
+                  btn.onclick = (e) => { dispatch({type: UPDATE_VALUE, payload: {fieldName: 'tripStreet', value: e.target.innerText}}); dispatch({type: TOGGLE_FILTER, payload: {filterName: `isModalError`}}) };
                   item.appendChild(btn);
                   return item;
                 }
@@ -423,18 +519,38 @@ import { NYC_API } from "./constants/config";
           }
         })
     } else {
+      //
     }
-  }, [searchClicks])
+  }, [state.tripAddress])
 
   /* End Effect: Convert Destination to Lat/Lon */
 
+  /* Start Effect: Animate Options Icon 
+  Starts an animation for the options icon. Which animation depends on the current options value in state. Said property triggers this */
+  useEffect(()=>{
+    const icon = document.getElementById("options-icon");
+    const panel = document.getElementById("options-panel");
+    if (!state.options) {
+        icon.classList.remove("iconOn");
+        panel.classList.remove("panelOn");
+        icon.classList.add("iconOff");
+        panel.classList.add("panelOff");
+    } else {
+        icon.classList.remove("iconOff");
+        panel.classList.remove("panelOff");
+        icon.classList.add("iconOn");
+        panel.classList.add("panelOn");
+    }
+  },[state.options])
+  /* End Effect: Animate Options Icon */
+
   /* Start Effect: Error Modal Transition 
-    Runs when isModalError changes. If new value is true, it turns on the modal's visibility. If false, it turns it off.
+  Runs when isModalError changes. If new value is true, it turns on the modal's visibility. If false, it turns it off.
   */
   useEffect(()=>{
     let modal = document.getElementById(`modal-error`);
     let modalBg = document.getElementById(`modal-bg`);
-      if (isModalError){
+      if (state.isModalError){
         modal.classList.remove(`errorOff`);
         modalBg.classList.remove(`errorOff`);
         modal.classList.add(`errorOn`);
@@ -445,18 +561,19 @@ import { NYC_API } from "./constants/config";
         modal.classList.add(`errorOff`);
         modalBg.classList.add(`errorOff`);
       }
-    },[isModalError])
+    },[state.isModalError])
   /* End Effect: Error Modal Transition */
 
   /* Start Effect: Update Distance from Destination */
   useEffect(() => {
-    console.log(destLocation);
-    if (destLocation && stationsDest){
-      console.log(`Setting new distances based on lat ${destLocation.latitude}, lon ${destLocation.longitude}`);
-      setStationsDest(SortStations(UpdateDistance(destLocation.latitude, destLocation.longitude, stationsDest), true));
+    if (Object.keys(state.tripLocation).length > 0){
+      dispatch({
+        type: UPDATE_TRIP_STATIONS
+      })
     }
-  },[destLocation])
+  },[state.tripLocation])
   /* End Effect: Update Distance from Destination */
+  /* End: Effects */
 
   return (
     <div
@@ -486,7 +603,7 @@ import { NYC_API } from "./constants/config";
           css={css`
             position: absolute;
             width: 90vw;
-            left: 50vw;
+            left: 50%;
             transform: translateX(-50%);
           `}
         >
@@ -503,7 +620,7 @@ import { NYC_API } from "./constants/config";
                 margin: 0 0 ${space[3]} 0;
               `}
             >
-              Last updated: <strong>{lastUpdated}</strong>
+              Last updated: <strong>{state.lastUpdated}</strong>
             </div>
             <div
                 css={css`
@@ -523,6 +640,7 @@ import { NYC_API } from "./constants/config";
                         ${space[0]};
                     flex: 1 1 50%;
                     padding: ${space[3]} ${space[0]};
+                    ${state.useTripPlanner ? `` : `border-bottom: 0px;`}
                     `}
                 >
                     <button
@@ -533,7 +651,7 @@ import { NYC_API } from "./constants/config";
                         font-weight: ${fontWeight["bold"]};
                         color: #000;
                     `}
-                    onClick={useTripPlanner ? (e) => handleClickTrip(e) : undefined}
+                    onClick={state.useTripPlanner ? () => dispatch({ type: TOGGLE_FILTER, payload: { filterName: `useTripPlanner` } }) : undefined}
                     >
                     Viewer
                     </button>
@@ -549,6 +667,7 @@ import { NYC_API } from "./constants/config";
                         ${space[0]};
                     flex: 1 1 50%;
                     padding: ${space[3]} ${space[0]};
+                    ${state.useTripPlanner ? `border-bottom: 0px;` : ``}
                     `}
                 >
                     <button
@@ -559,7 +678,7 @@ import { NYC_API } from "./constants/config";
                         font-weight: ${fontWeight["bold"]};
                         color: #000;
                     `}
-                    onClick={useTripPlanner ? undefined : (e) => handleClickTrip(e)}
+                    onClick={state.useTripPlanner ? undefined : () => dispatch({ type: TOGGLE_FILTER, payload: { filterName: `useTripPlanner` } })}
                     >
                     Trip Planner
                     </button>
@@ -588,7 +707,7 @@ import { NYC_API } from "./constants/config";
                     border-radius: ${space[4]};
                     background-color: transparent;
                   `}
-                  onClick={handleClick}
+                  onClick={()=> {getStationStatus()}}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -619,9 +738,9 @@ import { NYC_API } from "./constants/config";
                   type="text"
                   label="search"
                   placeholder="Search"
-                  value={searchQuery}
-                  onChange={(e) => updateInput(e)}
-                  id="search"
+                  value={state.searchQuery}
+                  onChange={(e) => updateInput(e, true)}
+                  id="searchQuery"
                   css={css`
                     box-sizing: border-box;
                     width: 100%;
@@ -700,7 +819,7 @@ import { NYC_API } from "./constants/config";
                       stroke-miterlimit: 10;
                     }
                   `}
-                  onClick={(e) => toggleOptions(e)}
+                  onClick={() => dispatch({ type: TOGGLE_FILTER, payload: { filterName: `options` } })}
                 >
                   <line x1="-207.13" y1="499.81" x2="1207.08" y2="499.81" />
                   <line x1="499.55" y1="-207.04" x2="499.55" y2="1207.17" />
@@ -729,8 +848,8 @@ import { NYC_API } from "./constants/config";
                   <input
                     type="checkbox"
                     label="Electric Only?"
-                    onChange={(e) => toggleElec(e)}
-                    checked={filterElec ? "checked" : ""}
+                    onChange = { () => dispatch({ type: TOGGLE_FILTER, payload: { filterName: `filterElec` } }) }
+                    checked={state.filterElec ? "checked" : ""}
                   />
                 </div>
                 <div>
@@ -738,8 +857,8 @@ import { NYC_API } from "./constants/config";
                   <input
                     type="checkbox"
                     label="Docks Only?"
-                    onChange={(e) => toggleDock(e)}
-                    checked={filterDock ? "checked" : ""}
+                    onChange = { () => dispatch({ type: TOGGLE_FILTER, payload: { filterName: `filterDock` } }) }
+                    checked={state.filterDock ? "checked" : ""}
                   />
                 </div>
                 <div>
@@ -747,8 +866,8 @@ import { NYC_API } from "./constants/config";
                   <input
                     type="checkbox"
                     label="Electric with No Classic?"
-                    onChange={(e) => toggleElecFree(e)}
-                    checked={filterElecFree ? "checked" : ""}
+                    onChange = { () => dispatch({ type: TOGGLE_FILTER, payload: { filterName: `filterElecFree` } }) }
+                    checked={state.filterElecFree ? "checked" : ""}
                   />
                   {/* Convert this to a help icon item - <i>(CitiBike waives e-bike charges if there are only e-bikes at a station at the start of the ride)</i> */}
                 </div>
@@ -757,25 +876,25 @@ import { NYC_API } from "./constants/config";
           </div>
           <div
             css={css`
-                display: ${dispViewElems};
-                section.stationOff,
-                .filterElecOn section.elecOff,
-                .filterElecFreeOn section.elecFreeOff,
-                .filterElecDockOn section.dockOff {
+              display: ${dispViewElems};
+              section.stationOff,
+              .filterElecOn section.elecOff,
+              .filterElecFreeOn section.elecFreeOff,
+              .filterDockOn section.dockOff {
                 display: none;
-                }
+              }
             `}
           >
             <div
               className={
-                (filterElec ? "filterElecOn" : "filterElecOff") +
+                (state.filterElec ? "filterElecOn" : "filterElecOff") +
                 " " +
-                (filterElecFree ? "filterElecFreeOn" : "filterElecFreeOff") +
+                (state.filterElecFree ? "filterElecFreeOn" : "filterElecFreeOff") +
                 " " +
-                (filterDock ? "filterDockOn" : "filterDockOff")
+                (state.filterDock ? "filterDockOn" : "filterDockOff")
               }
             >
-              {stations.map((station) => (
+              {state.stations.length > 0 && state.stations.map((station) => (
                 <Station key={station.station_id} data={station} />
               ))}
             </div>
@@ -814,20 +933,20 @@ import { NYC_API } from "./constants/config";
               type="text"
               label="houseNumber"
               placeholder="House Number"
-              id="houseNumber"
-              value={houseNumber}
+              id="tripHouseNumber"
+              value={state.tripHouseNumber}
               onChange={(e) => updateInput(e)}              
             />
             <input
               type="text"
               label="street"
               placeholder="Street"
-              id="street"
-              value={street}
+              id="tripStreet"
+              value={state.tripStreet}
               onChange={(e) => updateInput(e)}              
             />
             <select
-              id="borough"
+              id="tripBorough"
               onChange={(e) => updateInput(e)}
             >
               <option
@@ -898,8 +1017,8 @@ import { NYC_API } from "./constants/config";
                 }
             `}
           >
-            {destLocation &&
-              stationsDest.slice(0,9).map((station) => (
+            {state.tripStations.length > 0 && Object.keys(state.tripLocation).length > 0 &&
+              state.tripStations.slice(0,9).map((station) => (
                 <Station key={`dest-${station.station_id}`} data={station} />
               ))
             }
@@ -908,37 +1027,45 @@ import { NYC_API } from "./constants/config";
         <div
           css={css`
             .errorOn {
+              display: block;
               visibility: visible;
               opacity: 1;
             }
             .errorOnBg {
+              display: block;
               visibility: visible;
               opacity: 0.25;
             }
             .errorOff {
+              diplay: none;
               visibility: hidden;
               opacity: 0;
             }
           `}
         >
           <div
-            id="modal-bg"
             css={css`
               display: ${dispTripElems};
-              position: absolute;
-              z-index: 200;
-              top: 0;
-              left: 0;
-              width: 100vw;
-              height: 100vh;
-              background-color: rgb(0, 0, 0);
-              transition: 0.25s ease-in-out;
-              opacity: 0;
-              visiblity: hidden;
             `}
-            onClick={()=>handleClickError()}
           >
-
+            <div
+              id="modal-bg"
+              css={css`
+                display: none;
+                position: absolute;
+                z-index: 200;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background-color: rgb(0, 0, 0);
+                transition: 0.25s ease-in-out;
+                opacity: 0;
+                visiblity: hidden;
+              `}
+              onClick={() => {dispatch({type: TOGGLE_FILTER, payload: { filterName: `isModalError`}})}}
+            >
+            </div>
           </div>
           <div
             id="modal-error"
@@ -1003,7 +1130,7 @@ import { NYC_API } from "./constants/config";
                 top: ${space[2]};
                 right: ${space[3]};
               `}
-              onClick={()=>handleClickError()}
+              onClick={() => {dispatch({type: TOGGLE_FILTER, payload: { filterName: `isModalError`}})}}
             >
               x
             </div>
