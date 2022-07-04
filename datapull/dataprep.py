@@ -55,15 +55,6 @@ def read_record():
             print(records.record[record_counter].stations.station[station_counter])
             station_counter += 1
         record_counter += 1
-    """while record_counter < 3:
-        for record in records.record:
-            station_counter = 0
-            while station_counter < 3:
-                for station in record.stations.station:
-                    print('station_counter: %i' % (station_counter))
-                    print(station)
-                    station_counter += 1
-            record_counter += 1"""
 
     """print('Converting protocol buffer message to JSON.')
     data_raw = MessageToJson(records)

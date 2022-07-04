@@ -1,4 +1,4 @@
-export default function GetStationInfo (ENDPOINT) {
+export default function FetchData (ENDPOINT) {
   return fetch(ENDPOINT)
     .then((response) => response.json())
     .then((data) => {
